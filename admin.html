@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>전자어음 할인 관리자</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f2f5;color:#333;line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
+.subtitle{text-align:center;color:#888;font-size:0.78rem;margin-bottom:6px}
+.bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
+
+/* 대시보드 카드 */
+.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.dash-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.dash-card .num{font-size:1.6rem;font-weight:800;line-height:1.2}
+.dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
+.c-total{color:#1565c0}.c-wait{color:#e65100}.c-prog{color:#7b1fa2}.c-done{color:#2e7d32}.c-amount{color:#6a1b9a}
+
+/* 필터 바 */
+.filter-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:#1565c0}
+.filter-bar input[type="text"]{flex:1;min-width:160px}
+
+/* 리스트 */
+.list-header{display:grid;grid-template-columns:50px 1fr 1fr 120px 90px 80px 80px;gap:8px;padding:10px 14px;font-size:0.75rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
+.list-item{display:grid;grid-template-columns:50px 1fr 1fr 120px 90px 80px 80px;gap:8px;align-items:center;padding:12px 14px;background:#fff;border-radius:10px;margin-bottom:6px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.85rem;cursor:pointer;transition:all 0.15s}
+.list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
+.list-item .no{color:#999;font-size:0.78rem}
+.list-item .company{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .issuer{color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.82rem}
+.list-item .due{font-size:0.8rem;color:#666;text-align:center}
+.badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700}
+.badge-wait{background:#fff3e0;color:#e65100}
+.badge-select{background:#e3f2fd;color:#1565c0}
+.badge-input{background:#f3e5f5;color:#7b1fa2}
+.badge-endorse{background:#fff8e1;color:#f57f17}
+.badge-done{background:#e8f5e9;color:#2e7d32}
+.badge-cancel{background:#ffebee;color:#c62828}
+.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.9rem}
+
+/* 모달 */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:580px;max-height:none;margin:40px auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;border-bottom:1px solid #eee}
+.modal-header h2{font-size:1rem;color:#1565c0}
+.modal-close{width:32px;height:32px;border:none;background:#f5f5f5;border-radius:50%;font-size:1.1rem;cursor:pointer;color:#888;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:#e0e0e0;color:#333}
+.modal-body{padding:20px}
+
+/* 정보 그리드 */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.info-item{background:#f8f9fa;border-radius:10px;padding:10px 12px}
+.info-item .lbl{font-size:0.72rem;color:#888;font-weight:600;margin-bottom:2px}
+.info-item .val{font-size:0.92rem;font-weight:700;color:#333}
+.info-item .val.hl{color:#1565c0}
+.info-full{grid-column:1/-1}
+.divider{border:none;border-top:2px solid #e3f2fd;margin:8px 0 16px}
+
+/* 상태 진행바 */
+.progress-bar{display:flex;gap:4px;margin-bottom:18px}
+.step{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:0.72rem;font-weight:700;background:#f0f0f0;color:#bbb;transition:all 0.3s}
+.step.active{background:#1565c0;color:#fff}
+.step.done-s{background:#e8f5e9;color:#2e7d32}
+.step.cancel-s{background:#ffebee;color:#c62828}
+
+/* 할인 조건 입력 */
+.rate-section{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:14px;padding:20px;margin-bottom:16px}
+.rate-section h3{font-size:0.88rem;color:#1565c0;margin-bottom:14px}
+.rate-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:0.75rem;color:#666;font-weight:600;margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.95rem;outline:none;background:#fff}
+.field input:focus,.field select:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,0.08)}
+.field input[readonly]{background:#f5f5f5;color:#1565c0;font-weight:700}
+
+/* 결과 패널 */
+.result-panel{background:#fff;border-radius:12px;padding:16px;margin-top:12px;border:2px solid #e3f2fd}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04)}
+.result-row:last-child{border-bottom:none}
+.result-lbl{font-size:0.82rem;color:#666}
+.result-val{font-size:1rem;font-weight:700;color:#1565c0}
+.result-val.fee{color:#e65100;font-size:1.05rem}
+.result-val.net{color:#2e7d32;font-size:1.15rem}
+
+/* 분할배서 입력 */
+.split-section{background:#fff8e1;border-radius:14px;padding:18px;margin-bottom:16px;border:1.5px solid #ffe082}
+.split-section h3{font-size:0.88rem;color:#f57f17;margin-bottom:12px}
+.split-check{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:0.88rem;font-weight:600;cursor:pointer}
+.split-check input[type="checkbox"]{width:18px;height:18px;accent-color:#f57f17}
+.split-inputs{margin-top:10px}
+.split-row-input{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.split-row-input .sn{font-size:0.82rem;color:#888;width:36px;text-align:center;font-weight:600}
+.split-row-input input{flex:1;padding:9px 12px;border:1.5px solid #ffe082;border-radius:8px;font-size:0.92rem;outline:none;text-align:right}
+.split-row-input input:focus{border-color:#f57f17}
+.split-total{display:flex;justify-content:space-between;padding:10px 0;margin-top:8px;border-top:2px solid #ffe082;font-weight:700;font-size:0.88rem}
+.split-total .match{color:#2e7d32}
+.split-total .mismatch{color:#c62828}
+
+/* 신청자 입력 정보 (읽기전용) */
+.applicant-info{background:#f3e5f5;border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #ce93d8}
+.applicant-info h3{font-size:0.88rem;color:#7b1fa2;margin-bottom:10px}
+.ai-row{display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;border-bottom:1px solid rgba(0,0,0,0.04)}
+.ai-row:last-child{border-bottom:none}
+.ai-lbl{color:#888}.ai-val{font-weight:600;color:#333}
+
+/* 버튼 */
+.btn-row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 4px 12px rgba(46,125,50,0.3)}
+.btn-success:hover{transform:translateY(-1px)}
+.btn-secondary{background:#f5f5f5;color:#666}
+.btn-secondary:hover{background:#e0e0e0;color:#333}
+.btn-slack{background:linear-gradient(135deg,#611bb8,#7c4dff);color:#fff;box-shadow:0 4px 12px rgba(124,77,255,0.3)}
+.btn-deposit{background:linear-gradient(135deg,#00695c,#00897b);color:#fff;box-shadow:0 4px 12px rgba(0,105,92,0.3)}
+.btn-deposit:hover{transform:translateY(-1px)}
+
+/* 토스트 */
+.msg-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:600;color:#fff;z-index:2000;display:none}
+.msg-ok{background:#2e7d32}.msg-err{background:#c62828}
+
+/* 팝업 */
+.popup-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:3000;justify-content:center;align-items:center}
+.popup-overlay.show{display:flex}
+.popup{background:#fff;border-radius:14px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,0.2);text-align:center}
+.popup h3{color:#c62828;margin-bottom:12px;font-size:1rem}
+.popup .detail{font-size:0.88rem;color:#555;margin-bottom:6px}
+.popup .diff{font-size:1.2rem;font-weight:800;margin:10px 0}
+.popup .diff.plus{color:#c62828}
+.popup .diff.minus{color:#1565c0}
+.popup-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888}
+
+.footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
+
+/* PIN 인증 화면 */
+.pin-screen{display:flex;align-items:center;justify-content:center;min-height:70vh}
+.pin-card{background:#fff;border-radius:14px;padding:36px 28px;max-width:380px;width:100%;box-shadow:0 2px 12px rgba(0,0,0,0.08);text-align:center}
+.pin-card h2{font-size:1rem;color:#1565c0;margin-bottom:6px}
+.pin-card p{font-size:0.82rem;color:#888;margin-bottom:20px}
+.pin-card .field input{text-align:center;font-size:1.4rem;font-weight:700;letter-spacing:8px;padding:14px}
+.pin-card .pin-btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3);margin-top:16px;transition:all 0.2s}
+.pin-card .pin-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
+.pin-msg{margin-top:12px;font-size:0.82rem;color:#c62828;min-height:20px}
+
+/* === 데스크톱 (960px+) 기본 === */
+
+/* 태블릿 (700px~960px) */
+@media(max-width:960px){
+  .wrap{max-width:100%;padding:12px}
+  .dash{grid-template-columns:repeat(5,1fr);gap:8px}
+  .dash-card{padding:10px}
+  .dash-card .num{font-size:1.3rem}
+}
+
+/* 모바일 (700px 이하) */
+@media(max-width:700px){
+  .wrap{padding:10px}
+  h1{font-size:1.15rem;padding:14px 0 4px}
+  .subtitle{font-size:0.72rem}
+  .dash{grid-template-columns:repeat(3,1fr);gap:6px}
+  .dash-card{padding:10px 6px}
+  .dash-card .num{font-size:1.2rem}
+  .dash-card .label{font-size:0.65rem}
+  .filter-bar{gap:6px}
+  .filter-bar input,.filter-bar select{padding:8px 10px;font-size:0.82rem}
+  .list-header{display:none}
+  .list-item{display:flex;flex-wrap:wrap;gap:4px 12px;padding:14px;font-size:0.85rem}
+  .list-item .no{display:none}
+  .list-item .company{flex:1;min-width:50%;font-size:0.9rem}
+  .list-item .issuer{flex:1;min-width:40%;font-size:0.82rem}
+  .list-item .amount{font-size:0.9rem;text-align:left}
+  .list-item .due{font-size:0.78rem;color:#888;text-align:left}
+  .modal{margin:16px auto;border-radius:12px}
+  .modal-body{padding:14px}
+  .info-grid{grid-template-columns:1fr;gap:8px}
+  .rate-row{grid-template-columns:1fr}
+  .rate-section{padding:14px}
+  .split-section{padding:14px}
+  .result-panel{padding:12px}
+}
+
+/* 소형 모바일 (400px 이하) */
+@media(max-width:400px){
+  .wrap{padding:8px}
+  .dash{grid-template-columns:repeat(3,1fr);gap:4px}
+  .dash-card .num{font-size:1rem}
+  .modal{margin:8px auto}
+  .modal-header{padding:14px 16px 10px}
+  .modal-body{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== PIN 인증 화면 ===== -->
+  <div id="pinScreen">
+    <h1>전자어음 할인 관리자</h1>
+    <p class="subtitle">276홀딩스 · 관리 대시보드</p>
+    <div class="bar"></div>
+    <div class="pin-screen">
+      <div class="pin-card">
+        <h2>관리자 인증</h2>
+        <p>관리자 PIN을 입력해 주세요.</p>
+        <div class="field">
+          <input type="password" id="pinInput" placeholder="••••" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')doPin()">
+        </div>
+        <button class="pin-btn" onclick="doPin()">확인</button>
+        <div class="pin-msg" id="pinMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 관리자 대시보드 (초기 숨김) ===== -->
+  <div id="adminScreen" style="display:none">
+  <h1>전자어음 할인 관리자</h1>
+  <p class="subtitle">276홀딩스 · 관리 대시보드</p>
+  <div class="bar"></div>
+
+  <!-- 대시보드 -->
+  <div class="dash">
+    <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체</div></div>
+    <div class="dash-card"><div class="num c-wait" id="dWait">0</div><div class="label">대기</div></div>
+    <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="label">진행중</div></div>
+    <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">완료</div></div>
+    <div class="dash-card"><div class="num c-amount" id="dAmount">0</div><div class="label">총 어음금액</div></div>
+  </div>
+
+  <!-- 필터 -->
+  <div class="filter-bar">
+    <input type="text" id="filterText" placeholder="업체명 / 발행사 검색" oninput="renderList()">
+    <select id="filterStatus" onchange="renderList()">
+      <option value="all">전체</option>
+      <option value="wait">대기</option>
+      <option value="select">선택</option>
+      <option value="input">입력</option>
+      <option value="endorse">배서</option>
+      <option value="done">완료</option>
+      <option value="cancel">취소</option>
+    </select>
+  </div>
+
+  <!-- 리스트 -->
+  <div class="list-header">
+    <span>#</span><span>신청업체</span><span>발행사</span>
+    <span style="text-align:right">어음금액</span><span style="text-align:center">만기일</span>
+    <span style="text-align:center">상태</span><span style="text-align:center">접수일</span>
+  </div>
+  <div id="listBody"></div>
+
+  <div class="footer">276홀딩스 · 전자어음 할인 관리 시스템</div>
+  </div><!-- /adminScreen -->
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">문의 상세</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- 분할배서 차액 팝업 -->
+<div class="popup-overlay" id="popupOverlay" onclick="if(event.target===this)closePopup()">
+  <div class="popup" style="position:relative">
+    <button class="popup-close" onclick="closePopup()">&times;</button>
+    <h3>분할배서 금액 불일치</h3>
+    <div class="detail" id="popBill">어음금액: -</div>
+    <div class="detail" id="popSum">합계액: -</div>
+    <div class="diff" id="popDiff">차액: -</div>
+    <p style="font-size:0.8rem;color:#888;margin-top:10px">X를 눌러 닫고 금액을 수정해주세요.</p>
+  </div>
+</div>
+
+<div class="msg-toast" id="toast"></div>
+
+<script>
+// ===== Config =====
+var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
+var ADMIN_PIN = '0000';
+
+// ===== PIN 인증 =====
+function doPin(){
+  var input = $('pinInput').value;
+  var msgEl = $('pinMsg');
+  if(input === ADMIN_PIN){
+    $('pinScreen').style.display = 'none';
+    $('adminScreen').style.display = 'block';
+    loadAll().then(function(data){
+      list = data;
+      renderDashboard();
+      renderList();
+    });
+  } else {
+    msgEl.textContent = 'PIN이 올바르지 않습니다.';
+    msgEl.style.display = 'block';
+    $('pinInput').value = '';
+    $('pinInput').focus();
+    setTimeout(function(){ msgEl.style.display = 'none'; }, 2500);
+  }
+}
+
+// ===== Utility =====
+function $(id){return document.getElementById(id)}
+function fmt(n){return n?Number(n).toLocaleString('ko-KR'):'0'}
+function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
+function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
+
+// 공휴일
+var KR_HOLIDAYS={
+  2024:['01-01','02-09','02-10','02-11','02-12','03-01','04-10','05-01','05-06','05-15','06-06','08-15','09-16','09-17','09-18','10-03','10-09','12-25'],
+  2025:['01-01','01-28','01-29','01-30','03-01','03-03','05-01','05-05','05-06','06-06','08-15','10-03','10-05','10-06','10-07','10-08','10-09','12-25'],
+  2026:['01-01','02-16','02-17','02-18','03-01','03-02','05-01','05-05','05-24','05-25','06-06','06-08','08-15','08-17','10-03','10-04','10-05','10-06','10-07','10-08','10-09','12-25'],
+  2027:['01-01','02-06','02-07','02-08','02-09','02-10','03-01','05-01','05-05','05-13','06-06','06-07','08-15','08-16','09-23','09-24','09-25','09-27','10-03','10-04','10-09','10-11','12-25','12-27']
+};
+function isHoliday(d){var y=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return KR_HOLIDAYS[y]&&KR_HOLIDAYS[y].indexOf(mm+'-'+dd)!==-1;}
+function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;return !isHoliday(d);}
+function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
+function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function calcDiscount(amount,rate,days){return Math.round(amount*(rate/100)/30*days)+1500;}
+
+// ===== Data from API =====
+var list = [];
+
+// Load all bills from API
+function loadAll(){
+  return fetch(API_URL + '?action=getBills')
+    .then(function(r){return r.json()})
+    .catch(function(e){
+      console.error('Failed to load bills:', e);
+      return [];
+    });
+}
+
+// Update a bill via API
+function updateBillAPI(uid, updateData){
+  var payload = {
+    action: 'updateBill',
+    uid: uid
+  };
+  Object.assign(payload, updateData);
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload),
+    redirect: 'follow'
+  })
+    .then(function(r){return r.json()})
+    .catch(function(e){
+      console.error('Failed to update bill:', e);
+      return null;
+    });
+}
+
+var currentIdx = -1;
+
+var STATUS_MAP = {wait:'대기',select:'선택',input:'입력',endorse:'배서',done:'완료',cancel:'취소'};
+function badgeClass(s){return{wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';}
+
+// ===== 대시보드 =====
+function renderDashboard(){
+  var wait=0,prog=0,done=0,total=0;
+  list.forEach(function(x){
+    total+=x.billAmount||0;
+    if(x.status==='wait') wait++;
+    else if(x.status==='done') done++;
+    else if(x.status!=='cancel') prog++;
+  });
+  $('dTotal').textContent=list.length;
+  $('dWait').textContent=wait;
+  $('dProg').textContent=prog;
+  $('dDone').textContent=done;
+  $('dAmount').textContent=total>=100000000?(total/100000000).toFixed(1)+'억':total>=10000?(total/10000).toFixed(0)+'만':fmt(total);
+}
+
+// ===== 리스트 =====
+function renderList(){
+  var filter=$('filterText').value.trim().toLowerCase();
+  var status=$('filterStatus').value;
+  var filtered=list.map(function(x,i){x._idx=i;return x}).filter(function(x){
+    if(status!=='all'&&x.status!==status) return false;
+    if(filter){var h=((x.applyName||'')+(x.issuerName||'')+(x.uid||'')).toLowerCase();if(h.indexOf(filter)===-1)return false;}
+    return true;
+  });
+  filtered.sort(function(a,b){return(b._idx||0)-(a._idx||0)});
+  var el=$('listBody');
+  if(!filtered.length){el.innerHTML='<div class="empty-msg">조회된 문의가 없습니다.</div>';return;}
+  el.innerHTML=filtered.map(function(iq,i){
+    var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
+    var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
+    return '<div class="list-item" onclick="openModal('+iq._idx+')">'
+      +'<span class="no">'+(filtered.length-i)+'</span>'
+      +'<span class="company">'+(iq.applyName||'-')+'</span>'
+      +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
+      +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
+      +'<span class="due">'+(iq.billDue||'-')+'</span>'
+      +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
+      +'<span style="text-align:center;font-size:0.78rem;color:#999">'+ts+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+// ===== 진행바 =====
+function progressHTML(status){
+  var steps=['wait','select','input','endorse','done'];
+  var labels=['대기','선택','입력','배서','완료'];
+  if(status==='cancel') return '<div class="progress-bar"><div class="step cancel-s" style="flex:1">취소됨</div></div>';
+  var idx=steps.indexOf(status);
+  return '<div class="progress-bar">'+steps.map(function(s,i){
+    var cls=i<idx?'done-s':i===idx?'active':'';
+    return '<div class="step '+cls+'">'+labels[i]+'</div>';
+  }).join('')+'</div>';
+}
+
+// ===== 기본정보 =====
+function baseInfoHTML(iq){
+  return '<div class="info-grid">'
+    +'<div class="info-item"><div class="lbl">접수번호</div><div class="val">'+(iq.uid||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">접수일시</div><div class="val">'+(iq.timestamp||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">신청업체</div><div class="val">'+(iq.applyName||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.applyBiz||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">발행사</div><div class="val">'+(iq.issuerName||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.issuerBiz||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">어음금액</div><div class="val hl">\u20a9'+fmt(iq.billAmount)+'</div></div>'
+    +'<div class="info-item"><div class="lbl">만기일</div><div class="val">'+(iq.billDue||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">조회일</div><div class="val">'+(iq.startDate||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">사용일수</div><div class="val hl">'+(iq.usageDays||'-')+'일</div></div>'
+    +'</div>';
+}
+
+// ===== 모달 열기 =====
+function openModal(idx){
+  if(idx<0||idx>=list.length) return;
+  currentIdx=idx;
+  var iq=list[idx];
+  var st=iq.status||'wait';
+
+  $('modalTitle').textContent=(iq.issuerName||'문의')+' — '+(STATUS_MAP[st]||'대기');
+
+  var html='';
+  html += progressHTML(st);
+  html += baseInfoHTML(iq);
+  html += '<hr class="divider">';
+
+  // ===== 상태별 분기 =====
+  if(st==='wait'){
+    // 할인 조건 입력 + 분할배서
+    html += rateInputHTML(iq);
+    html += splitInputHTML(iq);
+    html += '<div class="btn-row">'
+      +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
+      +'<button class="btn btn-primary" onclick="doAdminSave()">완료 (신청자에게 전달)</button>'
+      +'</div>';
+  }
+  else if(st==='select'){
+    html += discountReadHTML(iq);
+    html += splitReadHTML(iq);
+    html += '<div style="text-align:center;padding:16px;color:#1565c0;font-size:0.85rem">신청자가 검토 중입니다. (취소 또는 진행요청 대기)</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
+  else if(st==='input'){
+    html += discountReadHTML(iq);
+    html += splitReadHTML(iq);
+    html += applicantInfoHTML(iq);
+    html += '<div style="text-align:center;padding:12px;color:#7b1fa2;font-size:0.85rem">신청자가 계좌정보를 입력 중입니다.</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
+  else if(st==='endorse'){
+    html += discountReadHTML(iq);
+    html += splitReadHTML(iq);
+    html += applicantInfoHTML(iq);
+    var ec = iq.endorseCompleted;
+    if(ec){
+      html += '<div style="text-align:center;padding:12px;color:#2e7d32;font-size:0.88rem;font-weight:700">신청자가 배서를 완료했습니다.</div>';
+      html += '<div class="btn-row">'
+        +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
+        +'<button class="btn btn-deposit" onclick="doDepositComplete()">입금완료</button>'
+        +'</div>';
+    } else {
+      html += '<div style="text-align:center;padding:12px;color:#f57f17;font-size:0.85rem">신청자가 배서 진행 중입니다.</div>';
+      html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+    }
+  }
+  else if(st==='done'){
+    html += discountReadHTML(iq);
+    html += splitReadHTML(iq);
+    html += applicantInfoHTML(iq);
+    if(iq.depositDate){
+      html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center">'
+        +'<div style="font-size:0.82rem;color:#666">입금완료일</div>'
+        +'<div style="font-size:1.2rem;font-weight:800;color:#1565c0">'+iq.depositDate+'</div></div>';
+    }
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
+  else if(st==='cancel'){
+    html += '<div style="text-align:center;padding:20px;color:#c62828;font-size:0.92rem;font-weight:700">이 문의는 취소되었습니다.</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
+
+  $('modalBody').innerHTML=html;
+  $('modalOverlay').classList.add('show');
+  document.body.style.overflow='hidden';
+
+  // 이벤트 재바인딩
+  if(st==='wait'){
+    var cb=$('splitCheck');
+    if(cb){
+      cb.checked = !!iq.splitEndorsement;
+      toggleSplitUI();
+    }
+    // 기존값 복원
+    if(iq.rate) {$('aRate').value=iq.rate; calcAdmin();}
+    if(iq.splitEndorsement&&iq.splitCount){
+      $('splitCountSel').value=iq.splitCount;
+      updateSplitFields();
+      if(iq.splitAmounts){
+        for(var i=0;i<iq.splitCount;i++){
+          var el=$('sa'+i);
+          if(el&&iq.splitAmounts[i]) el.value=fmt(iq.splitAmounts[i]);
+        }
+      }
+      updateSplitTotal();
+    }
+  }
+}
+
+function closeModal(){
+  $('modalOverlay').classList.remove('show');
+  document.body.style.overflow='';
+  currentIdx=-1;
+}
+
+// ===== 할인 조건 입력 HTML (대기 상태) =====
+function rateInputHTML(iq){
+  return '<div class="rate-section"><h3>할인 조건 입력</h3>'
+    +'<div class="rate-row">'
+    +'<div class="field"><label>월할인율 (%)</label><input type="number" id="aRate" step="0.01" placeholder="예: 2.50" oninput="calcAdmin()"></div>'
+    +'<div class="field"><label>사용일수</label><input type="text" id="aDays" value="'+(iq.usageDays||'')+'" readonly></div>'
+    +'</div>'
+    +'<div id="aCalcResult" style="display:none"><div class="result-panel">'
+    +'<div class="result-row"><span class="result-lbl">어음금액</span><span class="result-val" id="arAmount">-</span></div>'
+    +'<div class="result-row"><span class="result-lbl">할인액 (수수료 포함)</span><span class="result-val fee" id="arFee">-</span></div>'
+    +'<div class="result-row"><span class="result-lbl">입금액</span><span class="result-val net" id="arNet">-</span></div>'
+    +'</div></div></div>';
+}
+
+function calcAdmin(){
+  if(currentIdx<0) return;
+  var iq=list[currentIdx];
+  var rate=parseFloat($('aRate').value)||0;
+  var days=parseInt(iq.usageDays)||0;
+  var amount=iq.billAmount||0;
+  if(!rate||!days||!amount){$('aCalcResult').style.display='none';return;}
+  var fee=calcDiscount(amount,rate,days);
+  var net=amount-fee;
+  $('arAmount').textContent='\u20a9'+fmt(amount)+'원';
+  $('arFee').textContent='\u20a9'+fmt(fee)+'원';
+  $('arNet').textContent='\u20a9'+fmt(net)+'원';
+  $('aCalcResult').style.display='block';
+}
+
+// ===== 분할배서 입력 HTML =====
+function splitInputHTML(iq){
+  return '<div class="split-section"><h3>분할배서 조건</h3>'
+    +'<label class="split-check"><input type="checkbox" id="splitCheck" onchange="toggleSplitUI()"> 분할배서 적용</label>'
+    +'<div id="splitArea" style="display:none">'
+    +'<div class="field"><label>매수 선택 (1~5장)</label>'
+    +'<select id="splitCountSel" onchange="updateSplitFields()">'
+    +'<option value="1">1장</option><option value="2">2장</option><option value="3" selected>3장</option><option value="4">4장</option><option value="5">5장</option>'
+    +'</select></div>'
+    +'<div id="splitFields"></div>'
+    +'<div class="split-total"><span>합계</span><span id="splitTotalVal">0</span></div>'
+    +'</div>'
+    +'<div id="noSplitMsg" style="display:none;font-size:0.82rem;color:#888;padding:8px 0">분할배서 안함</div>'
+    +'</div>';
+}
+
+function toggleSplitUI(){
+  var checked=$('splitCheck').checked;
+  $('splitArea').style.display=checked?'block':'none';
+  $('noSplitMsg').style.display=checked?'none':'block';
+  if(checked) updateSplitFields();
+}
+
+function updateSplitFields(){
+  var cnt=parseInt($('splitCountSel').value)||3;
+  var h='';
+  for(var i=0;i<cnt;i++){
+    h+='<div class="split-row-input"><span class="sn">'+(i+1)+'장</span>'
+      +'<input type="text" id="sa'+i+'" placeholder="금액 입력" inputmode="numeric" oninput="fmtSplitAmt(this);updateSplitTotal()"></div>';
+  }
+  $('splitFields').innerHTML=h;
+  updateSplitTotal();
+}
+
+function fmtSplitAmt(el){
+  var v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>0&&v[0]==='0')v=v.replace(/^0+/,'')||'';
+  el.value=v?Number(v).toLocaleString('ko-KR'):'';
+}
+
+function updateSplitTotal(){
+  var cnt=parseInt($('splitCountSel')?$('splitCountSel').value:'0')||0;
+  var sum=0;
+  for(var i=0;i<cnt;i++){
+    var el=$('sa'+i);
+    if(el) sum+=parseNum(el.value);
+  }
+  var amount=(currentIdx>=0&&list[currentIdx])?list[currentIdx].billAmount:0;
+  var totalEl=$('splitTotalVal');
+  if(totalEl){
+    var match=sum===amount;
+    totalEl.textContent='\u20a9'+fmt(sum)+(match?' ✓':' (어음금액: \u20a9'+fmt(amount)+')');
+    totalEl.className=match?'match':'mismatch';
+  }
+}
+
+// ===== 관리자 저장 (대기→선택) =====
+function doAdminSave(){
+  if(currentIdx<0) return;
+  var rate=parseFloat($('aRate').value)||0;
+  if(!rate){showToast('월할인율을 입력해주세요.','err');return;}
+
+  var iq=list[currentIdx];
+  var days=parseInt(iq.usageDays)||0;
+  var fee=calcDiscount(iq.billAmount,rate,days);
+  var net=iq.billAmount-fee;
+
+  // 분할배서
+  var splitOn=$('splitCheck')&&$('splitCheck').checked;
+  var splitCount=0,splitAmounts=[];
+
+  if(splitOn){
+    splitCount=parseInt($('splitCountSel').value)||0;
+    var sum=0;
+    for(var i=0;i<splitCount;i++){
+      var el=$('sa'+i);
+      var v=el?parseNum(el.value):0;
+      splitAmounts.push(v);
+      sum+=v;
+    }
+
+    // 합계 검증
+    if(sum!==iq.billAmount){
+      var diff=iq.billAmount-sum;
+      $('popBill').textContent='어음금액: \u20a9'+fmt(iq.billAmount)+'원';
+      $('popSum').textContent='합계액: \u20a9'+fmt(sum)+'원';
+      var sign=diff>0?'+':'-';
+      $('popDiff').textContent='차액: '+sign+' \u20a9'+fmt(Math.abs(diff))+'원';
+      $('popDiff').className='diff '+(diff>0?'plus':'minus');
+      $('popupOverlay').classList.add('show');
+      return;
+    }
+  }
+
+  var updateData = {
+    rate: rate,
+    fee: fee,
+    net: net,
+    status: 'select',
+    processedAt: new Date().toLocaleString('ko-KR'),
+    splitEndorsement: !!splitOn,
+    splitCount: splitCount,
+    splitAmounts: splitAmounts,
+    _slackText: '[할인 조건 전달] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
+  };
+
+  updateBillAPI(iq.uid, updateData).then(function(){
+    // Reload data from API
+    loadAll().then(function(data){
+      list = data;
+      renderDashboard();
+      renderList();
+      showToast('저장 완료 — 신청자에게 전달되었습니다.','ok');
+      closeModal();
+    });
+  });
+}
+
+function closePopup(){$('popupOverlay').classList.remove('show');}
+
+// ===== 입금완료 (배서→완료) =====
+function doDepositComplete(){
+  if(currentIdx<0) return;
+  var iq=list[currentIdx];
+  var depositDate=new Date().toLocaleDateString('ko-KR');
+
+  var updateData = {
+    status: 'done',
+    depositDate: depositDate,
+    _slackText: '[입금 완료] '+iq.issuerName+'\n신청: '+iq.applyName+'\n입금액: \u20a9'+fmt(iq.net)+'원\n입금일: '+depositDate
+  };
+
+  updateBillAPI(iq.uid, updateData).then(function(){
+    // Reload data from API
+    loadAll().then(function(data){
+      list = data;
+      renderDashboard();
+      renderList();
+      showToast('입금완료 처리되었습니다.','ok');
+      closeModal();
+    });
+  });
+}
+
+// ===== 읽기전용 할인 정보 =====
+function discountReadHTML(iq){
+  if(!iq.rate) return '';
+  return '<div class="rate-section"><h3>할인 조건</h3>'
+    +'<div class="result-panel">'
+    +'<div class="result-row"><span class="result-lbl">사용일수</span><span class="result-val">'+(iq.usageDays||0)+'일</span></div>'
+    +'<div class="result-row"><span class="result-lbl">월할인율</span><span class="result-val">'+iq.rate+'%</span></div>'
+    +'<div class="result-row"><span class="result-lbl">할인액 (수수료 포함)</span><span class="result-val fee">\u20a9'+fmt(iq.fee)+'원</span></div>'
+    +'<div class="result-row"><span class="result-lbl">입금액</span><span class="result-val net">\u20a9'+fmt(iq.net)+'원</span></div>'
+    +'</div></div>';
+}
+
+// ===== 읽기전용 분할배서 =====
+function splitReadHTML(iq){
+  if(!iq.splitEndorsement) return '<div style="font-size:0.82rem;color:#888;padding:8px 0;margin-bottom:12px">분할배서 안함</div>';
+  var h='<div class="split-section" style="border:none"><h3>분할배서 조건 ('+iq.splitCount+'장)</h3>';
+  for(var i=0;i<iq.splitCount;i++){
+    h+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem"><span style="color:#888">'+(i+1)+'장</span><span style="font-weight:700">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ===== 신청자 입력정보 읽기 =====
+function applicantInfoHTML(iq){
+  var bk=iq.bankName||'';var ac=iq.accountNo||'';var fn=iq.attachmentName||'';
+  if(!bk&&!ac&&!fn) return '';
+  return '<div class="applicant-info"><h3>신청자 입력 정보</h3>'
+    +'<div class="ai-row"><span class="ai-lbl">은행명</span><span class="ai-val">'+(bk||'-')+'</span></div>'
+    +'<div class="ai-row"><span class="ai-lbl">계좌번호</span><span class="ai-val">'+(ac||'-')+'</span></div>'
+    +(fn?'<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>':'')
+    +'</div>';
+}
+
+// ===== 토스트 =====
+function showToast(msg,type){
+  var el=$('toast');el.textContent=msg;
+  el.className='msg-toast msg-'+(type||'ok');
+  el.style.display='block';
+  setTimeout(function(){el.style.display='none'},3000);
+}
+
+// ===== ESC =====
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePopup();closeModal();}});
+
+// ===== 초기화 =====
+$('pinInput').focus();
+</script>
+</body>
+</html>

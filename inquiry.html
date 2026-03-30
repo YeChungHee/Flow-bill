@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>전자어음 할인 문의</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f2f5;color:#333;line-height:1.5}
+.wrap{max-width:520px;margin:0 auto;padding:16px}
+h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
+.bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
+.nav-tabs{display:flex;gap:0;margin-bottom:18px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.nav-tab{flex:1;text-align:center;padding:11px 0;font-size:0.85rem;font-weight:700;text-decoration:none;color:#888;transition:all 0.2s;border-bottom:2.5px solid transparent}
+.nav-tab:hover{color:#1565c0;background:#f8f9ff}
+.nav-tab.active{color:#1565c0;border-bottom-color:#1565c0;background:#e3f2fd}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.07)}
+.card h2{font-size:0.92rem;color:#1565c0;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e3f2fd}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.8rem;color:#666;font-weight:600;margin-bottom:4px}
+.field input,.field select{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:0.95rem;outline:none;transition:border 0.2s;background:#fff}
+.field input:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,0.08)}
+.field input::placeholder{color:#bbb}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:5fr 3fr 4fr;gap:10px}
+.hidden{display:none}
+.ext-note{background:#fff8e1;color:#e65100;font-size:0.82rem;padding:10px 14px;border-radius:8px;margin-top:-6px;margin-bottom:14px}
+.preview{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:12px;padding:16px;margin-top:6px}
+.preview .row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.preview .row:last-child{border-bottom:none}
+.preview .lbl{font-size:0.82rem;color:#666}
+.preview .val{font-size:1rem;font-weight:700;color:#1565c0}
+.preview .val.settle{color:#1565c0;font-size:0.95rem}
+.dow-tag{display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;margin-left:6px}
+.dow-weekday{background:#e8f5e9;color:#2e7d32}
+.dow-sat{background:#fff3e0;color:#e65100}
+.dow-sun{background:#ffebee;color:#c62828}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{background:#bbb;box-shadow:none;cursor:not-allowed}
+.msg-box{margin-top:12px;padding:14px;border-radius:10px;font-size:0.88rem;text-align:center;font-weight:600}
+.msg-ok{background:#e8f5e9;color:#2e7d32}
+.msg-err{background:#ffebee;color:#c62828}
+.history-title{font-size:0.95rem;color:#555;font-weight:700;margin:20px 0 10px;padding-left:4px}
+.list-item{background:#fff;border-radius:10px;padding:14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);font-size:0.85rem}
+.list-item .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.list-item .company{font-weight:700;color:#333}
+.list-item .amount{font-weight:700;color:#1565c0}
+.list-item .meta{color:#999;font-size:0.78rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:700}
+.badge-wait{background:#fff3e0;color:#e65100}
+.badge-done{background:#e8f5e9;color:#2e7d32}
+.rate-info{color:#2e7d32;font-size:0.78rem;margin-top:2px}
+.empty{text-align:center;color:#bbb;padding:30px;font-size:0.88rem}
+.footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
+
+/* === 반응형 === */
+/* 데스크톱 (768px+) */
+@media(min-width:768px){
+  .wrap{max-width:640px;padding:24px}
+  h1{font-size:1.5rem;padding:24px 0 14px}
+  .card{padding:24px}
+  .btn{padding:16px;font-size:1.05rem}
+  .nav-tabs{margin-bottom:24px}
+  .nav-tab{padding:13px 0;font-size:0.9rem}
+}
+/* 소형 모바일 (380px 이하) */
+@media(max-width:380px){
+  .wrap{padding:10px}
+  h1{font-size:1.15rem;padding:12px 0 8px}
+  .card{padding:14px;border-radius:10px}
+  .card h2{font-size:0.85rem}
+  .field input,.field select{padding:9px 10px;font-size:0.88rem}
+  .row2{grid-template-columns:1fr;gap:8px}
+  .btn{padding:13px;font-size:0.92rem}
+  .nav-tab{padding:9px 0;font-size:0.8rem}
+  .preview .lbl{font-size:0.78rem}
+  .preview .val{font-size:0.9rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>전자어음 할인 문의</h1>
+  <div class="bar"></div>
+
+  <!-- 탭 네비게이션 -->
+  <div class="nav-tabs">
+    <a class="nav-tab active" href="inquiry.html">할인 문의</a>
+    <a class="nav-tab" href="dashboard.html">내 신청현황</a>
+  </div>
+
+  <!-- 신청 업체 정보 -->
+  <div class="card">
+    <h2>신청 업체 정보</h2>
+    <div class="field">
+      <label>업체명</label>
+      <input type="text" id="applyName" placeholder="신청 업체명 입력">
+    </div>
+    <div class="field">
+      <label>사업자번호</label>
+      <input type="text" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)">
+    </div>
+  </div>
+
+  <!-- 어음 정보 -->
+  <div class="card">
+    <h2>어음 정보</h2>
+    <div class="field">
+      <label>발행사명</label>
+      <input type="text" id="issuerName" placeholder="발행사명 입력">
+    </div>
+    <div class="field">
+      <label>발행사 사업자번호</label>
+      <input type="text" id="issuerBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)">
+    </div>
+    <div class="field">
+      <label>어음금액 (원)</label>
+      <input type="text" id="billAmount" placeholder="금액 입력" inputmode="numeric" oninput="formatAmount(this)">
+    </div>
+    <div class="field">
+      <label>만기일</label>
+      <input type="date" id="billDue">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>조회일</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="field">
+        <label>사용일수</label>
+        <input type="text" id="usageDays" readonly style="background:#f5f5f5;font-weight:700;color:#1565c0">
+      </div>
+    </div>
+    <div id="extNote" class="ext-note hidden"></div>
+  </div>
+
+  <!-- 어음 정보 미리보기 -->
+  <div id="previewCard" class="card hidden">
+    <h2>문의 정보 확인</h2>
+    <div class="preview">
+      <div class="row">
+        <span class="lbl">만기일 요일</span>
+        <span class="val" id="pvDow">-</span>
+      </div>
+      <div class="row">
+        <span class="lbl">결제일 (영업일)</span>
+        <span class="val" id="pvSettle">-</span>
+      </div>
+      <div class="row">
+        <span class="lbl">사용일수</span>
+        <span class="val" id="pvDays">-</span>
+      </div>
+      <div class="row">
+        <span class="lbl">어음금액</span>
+        <span class="val" id="pvAmount">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 제출 버튼 -->
+  <button class="btn btn-primary" id="btnSubmit">할인 조회 요청</button>
+  <div id="msgBox"></div>
+
+  <!-- 대시보드 링크 -->
+  <div style="text-align:center;margin-top:16px">
+    <a href="dashboard.html" style="color:#1565c0;font-size:0.85rem;text-decoration:none;font-weight:600">내 신청현황 보기 →</a>
+  </div>
+
+  <div class="footer">276홀딩스 · 전자어음 할인 문의 시스템</div>
+</div>
+
+<script>
+// ===== Config =====
+var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
+
+// ===== Utility =====
+function $(id){return document.getElementById(id)}
+function formatNumber(n){return n?Number(n).toLocaleString('ko-KR'):''}
+function parseNumber(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
+function today(){return new Date().toISOString().split('T')[0]}
+function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
+
+// ===== 어음금액 실시간 콤마 포맷 =====
+function formatAmount(el){
+  var pos=el.selectionStart;
+  var old=el.value;
+  var v=old.replace(/[^0-9]/g,'');
+  if(v.length>0&&v[0]==='0')v=v.replace(/^0+/,'')||'';
+  var formatted=v?Number(v).toLocaleString('ko-KR'):'';
+  el.value=formatted;
+  // 커서 위치 보정
+  var diff=formatted.length-old.length;
+  var newPos=pos+diff;
+  if(newPos<0)newPos=0;
+  el.setSelectionRange(newPos,newPos);
+  updatePreview();
+}
+
+// ===== 사업자번호 자동포맷 (000-00-00000) =====
+function formatBizNo(el){
+  var v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>10)v=v.substring(0,10);
+  var f='';
+  if(v.length>3){f=v.substring(0,3)+'-';if(v.length>5){f+=v.substring(3,5)+'-'+v.substring(5)}else{f+=v.substring(3)}}else{f=v}
+  el.value=f;
+}
+
+// ===== 대한민국 공휴일 DB (2024-2027) =====
+var KR_HOLIDAYS={
+  2024:['01-01','02-09','02-10','02-11','02-12','03-01','04-10','05-01','05-06','05-15','06-06','08-15','09-16','09-17','09-18','10-03','10-09','12-25'],
+  2025:['01-01','01-28','01-29','01-30','03-01','03-03','05-01','05-05','05-06','06-06','08-15','10-03','10-05','10-06','10-07','10-08','10-09','12-25'],
+  2026:['01-01','02-16','02-17','02-18','03-01','03-02','05-01','05-05','05-24','05-25','06-06','06-08','08-15','08-17','10-03','10-04','10-05','10-06','10-07','10-08','10-09','12-25'],
+  2027:['01-01','02-06','02-07','02-08','02-09','02-10','03-01','05-01','05-05','05-13','06-06','06-07','08-15','08-16','09-23','09-24','09-25','09-27','10-03','10-04','10-09','10-11','12-25','12-27']
+};
+function isHoliday(d){
+  var y=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  return KR_HOLIDAYS[y]&&KR_HOLIDAYS[y].indexOf(mm+'-'+dd)!==-1;
+}
+function isBusinessDay(d){
+  var dow=d.getDay();
+  if(dow===0||dow===6)return false;
+  return !isHoliday(d);
+}
+function nextBusinessDay(dateStr){
+  var d=new Date(dateStr);
+  while(!isBusinessDay(d))d.setDate(d.getDate()+1);
+  return d;
+}
+function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+
+// ===== 사용일수 계산 (공휴일 반영) =====
+function calcDays(){
+  var due=$('billDue').value, start=$('startDate').value;
+  if(due&&start){
+    var settle=nextBusinessDay(due);
+    var days=daysBetween(start,fmtDate(settle))+1;
+    $('usageDays').value=days;
+    // 180일 초과 경고
+    var ext=$('extNote');
+    if(days>180){
+      ext.classList.remove('hidden');
+      ext.textContent='\u26a0\ufe0f 만기일이 180일 초과입니다. 연장수수료가 추가될 수 있습니다.';
+    }else{ext.classList.add('hidden')}
+    updatePreview();
+  }
+}
+
+// ===== 할인액 계산 =====
+function calcDiscount(amount,monthlyRate,usageDays){
+  var fee=Math.round(amount*(monthlyRate/100)/30*usageDays)+1500;
+  return fee;
+}
+
+// ===== 문의 정보 미리보기 =====
+var dowNames=['일','월','화','수','목','금','토'];
+function updatePreview(){
+  var due=$('billDue').value;
+  var amount=parseNumber($('billAmount').value);
+  var days=parseInt($('usageDays').value)||0;
+
+  if(!due||!amount||!days){
+    $('previewCard').classList.add('hidden');
+    return;
+  }
+
+  $('previewCard').classList.remove('hidden');
+  var dueDate=new Date(due);
+  var dow=dueDate.getDay();
+  var settle=nextBusinessDay(due);
+  var settleStr=fmtDate(settle);
+  var isHol=!isBusinessDay(dueDate);
+  var dowClass=dow===6?'dow-sat':dow===0?'dow-sun':isHol?'dow-sun':'dow-weekday';
+  var dowLabel=isHol?(dowNames[dow]+'→'+settleStr+' 결제'):'평일';
+
+  $('pvDow').innerHTML=dowNames[dow]+'요일 <span class="dow-tag '+dowClass+'">'+dowLabel+'</span>';
+  $('pvSettle').textContent=settleStr;
+  $('pvDays').textContent=days+'일';
+  $('pvAmount').textContent='\uffe6'+formatNumber(amount)+'\uc6d0';
+}
+
+function buildSlackText(){
+  var applyName=$('applyName').value.trim();
+  var applyBiz=$('applyBiz').value.trim();
+  var issuerName=$('issuerName').value.trim();
+  var issuerBiz=$('issuerBiz').value.trim();
+  var amount=parseNumber($('billAmount').value);
+  var due=$('billDue').value;
+  var days=parseInt($('usageDays').value)||0;
+  var settle=nextBusinessDay(due);
+
+  var text='[전자어음 할인 문의]\n'+
+    '신청: '+applyName+' ('+applyBiz+')\n'+
+    '발행사: '+issuerName+' ('+issuerBiz+')\n'+
+    '어음금액: \uffe6'+formatNumber(amount)+'\uc6d0\n'+
+    '만기일: '+due+' → 결제일: '+fmtDate(settle)+'\n'+
+    '사용일수: '+days+'일';
+  return text;
+}
+
+// ===== API 함수 (GAS 기반) =====
+function loadAll(){
+  return fetch(API_URL+'?action=getBills')
+    .then(function(r){return r.json()})
+    .catch(function(e){console.error('loadAll error:',e);return[]});
+}
+
+// ===== 제출 핸들러 =====
+$('btnSubmit').addEventListener('click',function(){
+  var applyName=$('applyName').value.trim();
+  var applyBiz=$('applyBiz').value.trim();
+  var issuerName=$('issuerName').value.trim();
+  var issuerBiz=$('issuerBiz').value.trim();
+  var billAmount=parseNumber($('billAmount').value);
+  var billDue=$('billDue').value;
+  var startDate=$('startDate').value;
+  var usageDays=parseInt($('usageDays').value)||0;
+
+  // 필수값 체크
+  if(!applyName||!applyBiz||!issuerName||!issuerBiz||!billAmount||!billDue){
+    showMsg('모든 필수 항목을 입력해주세요.','err');
+    return;
+  }
+
+  // Slack 메시지 구성
+  var slackText=buildSlackText();
+
+  // API에 POST
+  var record={
+    action:'addBill',
+    uid:'IQ-'+Date.now().toString(36).toUpperCase(),
+    timestamp:new Date().toLocaleString('ko-KR'),
+    applyName:applyName,
+    applyBiz:applyBiz,
+    issuerName:issuerName,
+    issuerBiz:issuerBiz,
+    billAmount:billAmount,
+    billDue:billDue,
+    startDate:startDate,
+    usageDays:usageDays,
+    status:'wait',
+    _slackText:slackText
+  };
+
+  fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(record),
+    redirect:'follow'
+  }).then(function(r){
+    showMsg('\u2705 할인 조회가 접수되었습니다. ('+record.uid+')','ok');
+    setTimeout(function(){
+      location.href='dashboard.html?biz='+encodeURIComponent(applyBiz.replace(/[^0-9]/g,''));
+    }, 2000);
+  }).catch(function(e){
+    console.error('Submit error:',e);
+    showMsg('전송 중 오류가 발생했습니다.','err');
+  });
+});
+
+function showMsg(text,type){
+  var el=$('msgBox');
+  el.className='msg-box msg-'+(type||'ok');
+  el.textContent=text;
+  el.style.display='block';
+  setTimeout(function(){el.style.display='none'},4000);
+}
+
+// ===== 이벤트 바인딩 =====
+$('billDue').addEventListener('change',calcDays);
+$('startDate').addEventListener('change',calcDays);
+
+// billAmount는 oninput="formatAmount(this)"로 실시간 포맷 처리
+
+// ===== 초기화 =====
+function init(){
+  $('startDate').value=today();
+  // 히스토리 로드는 대시보드에서 사용 (현재 페이지는 폼 입력만 담당)
+}
+
+init();
+</script>
+</body>
+</html>
