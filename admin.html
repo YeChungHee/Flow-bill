@@ -333,9 +333,23 @@ function calcDiscount(amount,rate,days){return Math.round(amount*(rate/100)/30*d
 var list = [];
 
 // Load all bills from API
+function toArray(data){
+  if(Array.isArray(data)) return data;
+  if(data && typeof data==='object'){
+    if(Array.isArray(data.data)) return data.data;
+    if(Array.isArray(data.bills)) return data.bills;
+    var keys=Object.keys(data);
+    for(var i=0;i<keys.length;i++){if(Array.isArray(data[keys[i]])) return data[keys[i]];}
+  }
+  return [];
+}
 function loadAll(){
   return fetch(API_URL + '?action=getBills')
     .then(function(r){return r.json()})
+    .then(function(data){
+      console.log('API raw response:', data);
+      return toArray(data);
+    })
     .catch(function(e){
       console.error('Failed to load bills:', e);
       return [];

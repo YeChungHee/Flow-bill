@@ -343,12 +343,25 @@ function updateBillAPI(payload){
   }).then(function(r){return r.text()}).catch(function(e){console.error('API error:',e)});
 }
 
+// ===== 배열 변환 =====
+function toArray(data){
+  if(Array.isArray(data)) return data;
+  if(data && typeof data==='object'){
+    if(Array.isArray(data.data)) return data.data;
+    if(Array.isArray(data.bills)) return data.bills;
+    var keys=Object.keys(data);
+    for(var i=0;i<keys.length;i++){if(Array.isArray(data[keys[i]])) return data[keys[i]];}
+  }
+  return [];
+}
+
 // ===== Load All (async, 사업자번호 필터링) =====
 function loadAll(){
   return fetch(API_URL+'?action=getBills')
     .then(function(r){return r.json()})
     .then(function(data){
-      var all = data||[];
+      console.log('API raw response:', data);
+      var all = toArray(data);
       // 사업자번호로 필터링
       if(currentBiz){
         var bizClean = currentBiz.replace(/[^0-9]/g,'');

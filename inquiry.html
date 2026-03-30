@@ -300,10 +300,23 @@ function buildSlackText(){
   return text;
 }
 
+// ===== 배열 변환 =====
+function toArray(data){
+  if(Array.isArray(data)) return data;
+  if(data && typeof data==='object'){
+    if(Array.isArray(data.data)) return data.data;
+    if(Array.isArray(data.bills)) return data.bills;
+    var keys=Object.keys(data);
+    for(var i=0;i<keys.length;i++){if(Array.isArray(data[keys[i]])) return data[keys[i]];}
+  }
+  return [];
+}
+
 // ===== API 함수 (GAS 기반) =====
 function loadAll(){
   return fetch(API_URL+'?action=getBills')
     .then(function(r){return r.json()})
+    .then(function(data){console.log('API raw response:',data);return toArray(data);})
     .catch(function(e){console.error('loadAll error:',e);return[]});
 }
 
