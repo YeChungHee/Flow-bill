@@ -819,44 +819,52 @@ function doAccountConfirm(){
   var iq = allBills[currentIdx];
   var d = pendingAccountData;
 
-  // 파일이 있으면 먼저 Drive에 업로드
-  var uploadPromise;
-  if(d.file){
-    btn.textContent = '파일 업로드 중...';
-    uploadPromise = uploadFileToDrive(d.file);
-  } else {
-    uploadPromise = Promise.resolve(null);
-  }
+  // 파일 업로드 시도 (실패해도 계좌 저장은 진행)
+  var fileUploadResult = null;
 
-  uploadPromise.then(function(fileResult){
+  function doSaveAccount(fileResult){
     btn.textContent = '저장 중...';
     var payload = {
       action:'updateBill',
       uid:iq.uid,
       bankName:d.bankName,
       accountNo:d.accountNo,
-      attachmentName: fileResult ? fileResult.fileName : (iq.attachmentName||''),
+      attachmentName: fileResult ? fileResult.fileName : (d.file ? d.file.name : (iq.attachmentName||'')),
       attachmentUrl: fileResult ? fileResult.fileUrl : (iq.attachmentUrl||''),
       attachmentId: fileResult ? fileResult.fileId : (iq.attachmentId||''),
       status:'endorse',
       _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo
     };
-    return updateBillAPI(payload);
-  }).then(function(){
-    selectedFile = null;
-    return loadAll();
-  }).then(function(){
-    $('accountOverlay').classList.remove('show');
-    pendingAccountData = null;
-    renderDashboard(); renderList();
-    showToast('저장 완료 — 배서 단계로 이동합니다.','ok');
-    openModal(currentIdx);
-  }).catch(function(err){
-    console.error('Upload/Save error:', err);
-    btn.disabled = false;
-    btn.textContent = '입력완료';
-    showToast('저장 실패: '+err,'err');
-  });
+    return updateBillAPI(payload).then(function(){
+      selectedFile = null;
+      return loadAll();
+    }).then(function(){
+      $('accountOverlay').classList.remove('show');
+      pendingAccountData = null;
+      renderDashboard(); renderList();
+      var msg = '저장 완료 — 배서 단계로 이동합니다.';
+      if(d.file && !fileResult) msg += ' (첨부파일은 별도 업로드 필요)';
+      showToast(msg,'ok');
+      openModal(currentIdx);
+    });
+  }
+
+  if(d.file){
+    btn.textContent = '파일 업로드 중...';
+    uploadFileToDrive(d.file).then(function(result){
+      doSaveAccount(result);
+    }).catch(function(uploadErr){
+      console.warn('파일 업로드 실패, 계좌만 저장:', uploadErr);
+      doSaveAccount(null);
+    });
+  } else {
+    doSaveAccount(null).catch(function(err){
+      console.error('Save error:', err);
+      btn.disabled = false;
+      btn.textContent = '입력완료';
+      showToast('저장 실패: '+err,'err');
+    });
+  }
 }
 
 // ===== 수정 모드 (입력 상태에서) =====
