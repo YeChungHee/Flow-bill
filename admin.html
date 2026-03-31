@@ -832,9 +832,18 @@ function discountReadHTML(iq){
     +'</div></div>';
 }
 
+// ===== 분할배서 활성 여부 =====
+function isSplitActive(iq){
+  if(!iq.splitEndorsement || iq.splitEndorsement==='false' || iq.splitEndorsement===0 || iq.splitEndorsement==='0') return false;
+  if(!iq.splitCount || parseInt(iq.splitCount)<=1) return false;
+  if(!iq.splitAmounts || !Array.isArray(iq.splitAmounts) || iq.splitAmounts.length===0) return false;
+  var hasValue = iq.splitAmounts.some(function(v){return parseInt(v)>0;});
+  return hasValue;
+}
+
 // ===== 읽기전용 분할배서 =====
 function splitReadHTML(iq){
-  if(!iq.splitEndorsement || !iq.splitCount || iq.splitCount <= 1) return '';
+  if(!isSplitActive(iq)) return '';
   var h='<div class="split-section" style="border:none"><h3>분할배서 조건 ('+iq.splitCount+'장)</h3>';
   for(var i=0;i<iq.splitCount;i++){
     h+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem"><span style="color:#888">'+(i+1)+'장</span><span style="font-weight:700">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';

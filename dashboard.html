@@ -214,7 +214,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
       <p class="login-desc">할인 문의 시 입력한 사업자번호를 입력해 주세요.</p>
       <div class="field">
         <label>사업자번호</label>
-        <input type="text" id="loginBiz" placeholder="사업자번호 10자리 입력" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="text" id="loginBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn-new" onclick="doLogin()" id="btnLogin">조회하기</button>
       <div class="login-msg" id="loginMsg"></div>
@@ -295,6 +295,15 @@ function calcDiscount(amount,rate,days,splitCount){
   var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
   var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
   return baseFee + extraSplit;
+}
+
+// ===== 사업자번호 포맷 (3-2-5) =====
+function formatBizNo(el){
+  var v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>10)v=v.substring(0,10);
+  var f='';
+  if(v.length>3){f=v.substring(0,3)+'-';if(v.length>5){f+=v.substring(3,5)+'-'+v.substring(5)}else{f+=v.substring(3)}}else{f=v}
+  el.value=f;
 }
 
 // ===== Global State =====
@@ -462,8 +471,15 @@ function discountHTML(iq){
 }
 
 // ===== 분할배서 HTML =====
+function isSplitActive(iq){
+  if(!iq.splitEndorsement || iq.splitEndorsement==='false' || iq.splitEndorsement===0 || iq.splitEndorsement==='0') return false;
+  if(!iq.splitCount || parseInt(iq.splitCount)<=1) return false;
+  if(!iq.splitAmounts || !Array.isArray(iq.splitAmounts) || iq.splitAmounts.length===0) return false;
+  var hasValue = iq.splitAmounts.some(function(v){return parseInt(v)>0;});
+  return hasValue;
+}
 function splitHTML(iq){
-  if(!iq.splitEndorsement || !iq.splitCount || iq.splitCount <= 1) return '';
+  if(!isSplitActive(iq)) return '';
   var h = '<div class="split-panel"><h4>분할배서 조건 ('+iq.splitCount+'장)</h4>';
   for(var i=0;i<iq.splitCount;i++){
     h += '<div class="split-row"><span class="sn">'+(i+1)+'장</span><span class="sa">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';
