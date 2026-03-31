@@ -64,8 +64,8 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 .divider{border:none;border-top:2px solid #e3f2fd;margin:8px 0 16px}
 
 /* 상태 진행바 */
-.progress-bar{display:flex;gap:4px;margin-bottom:18px}
-.step{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:0.72rem;font-weight:700;background:#f0f0f0;color:#bbb;transition:all 0.3s}
+.progress-bar{display:flex;gap:3px;margin-bottom:18px}
+.step{flex:1;text-align:center;padding:7px 0;border-radius:7px;font-size:0.65rem;font-weight:700;background:#f0f0f0;color:#bbb;transition:all 0.3s}
 .step.active{background:#1565c0;color:#fff}
 .step.done-s{background:#e8f5e9;color:#2e7d32}
 .step.cancel-s{background:#ffebee;color:#c62828}
@@ -449,7 +449,7 @@ function updateBillAPI(uid, updateData){
 
 var currentIdx = -1;
 
-var STATUS_MAP = {wait:'대기',select:'선택',input:'입력',endorse:'배서',endorsed:'배서완료',done:'입금완료',cancel:'취소'};
+var STATUS_MAP = {wait:'조건대기',select:'조건선택',input:'조건입력',endorse:'배서진행',endorsed:'배서완료',done:'입금완료',cancel:'취소'};
 function badgeClass(s){return{wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';}
 
 // ===== 대시보드 =====
@@ -497,8 +497,8 @@ function renderList(){
 
 // ===== 진행바 =====
 function progressHTML(status){
-  var steps=['wait','select','input','endorse','done'];
-  var labels=['대기','선택','입력','배서','완료'];
+  var steps=['wait','select','input','endorse','endorsed','done'];
+  var labels=['조건대기','조건선택','조건입력','배서진행','배서완료','입금완료'];
   if(status==='cancel') return '<div class="progress-bar"><div class="step cancel-s" style="flex:1">취소됨</div></div>';
   var idx=steps.indexOf(status);
   return '<div class="progress-bar">'+steps.map(function(s,i){
