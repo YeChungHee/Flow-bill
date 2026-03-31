@@ -866,12 +866,29 @@ function splitReadHTML(iq){
 // ===== 신청자 입력정보 읽기 =====
 function applicantInfoHTML(iq){
   var bk=iq.bankName||'';var ac=iq.accountNo||'';var fn=iq.attachmentName||'';
+  var fUrl=iq.attachmentUrl||'';var fId=iq.attachmentId||'';
   if(!bk&&!ac&&!fn) return '';
-  return '<div class="applicant-info"><h3>신청자 입력 정보</h3>'
+  var h='<div class="applicant-info"><h3>신청자 입력 정보</h3>'
     +'<div class="ai-row"><span class="ai-lbl">은행명</span><span class="ai-val">'+(bk||'-')+'</span></div>'
-    +'<div class="ai-row"><span class="ai-lbl">계좌번호</span><span class="ai-val">'+(ac||'-')+'</span></div>'
-    +(fn?'<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>':'')
-    +'</div>';
+    +'<div class="ai-row"><span class="ai-lbl">계좌번호</span><span class="ai-val">'+(ac||'-')+'</span></div>';
+  if(fn){
+    h+='<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>';
+    if(fUrl){
+      var isImg=/\.(jpg|jpeg|png)$/i.test(fn);
+      h+='<div style="margin-top:8px;background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px">';
+      if(isImg&&fId){
+        h+='<img src="https://drive.google.com/thumbnail?id='+fId+'&sz=w400" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+      } else {
+        h+='<div style="text-align:center;font-size:2.5rem;padding:12px 0">📄</div>';
+      }
+      h+='<div style="display:flex;gap:8px;margin-top:8px">';
+      h+='<a href="'+fUrl+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">보기</a>';
+      if(fId) h+='<a href="https://drive.google.com/uc?export=download&id='+fId+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">다운로드</a>';
+      h+='</div></div>';
+    }
+  }
+  h+='</div>';
+  return h;
 }
 
 // ===== 토스트 =====

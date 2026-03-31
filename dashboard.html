@@ -108,6 +108,17 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .file-area .text{font-size:0.78rem;color:#888}
 .file-name{font-size:0.82rem;color:#1565c0;font-weight:600;margin-top:6px}
 .file-input{display:none}
+.file-uploading{color:#f57c00;font-size:0.8rem;margin-top:6px}
+/* 첨부파일 미리보기 */
+.attach-preview{background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-top:8px}
+.attach-preview img{max-width:100%;border-radius:8px;margin-bottom:8px}
+.attach-preview .pdf-icon{font-size:2.5rem;text-align:center;padding:16px 0}
+.attach-preview .file-label{font-size:0.78rem;color:#666;margin-bottom:8px;word-break:break-all}
+.attach-btns{display:flex;gap:8px;margin-top:8px}
+.attach-btns a,.attach-btns button{flex:1;padding:8px 0;border-radius:8px;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none;border:none;cursor:pointer}
+.btn-preview-view{background:#e3f2fd;color:#1565c0}
+.btn-preview-dl{background:#e8f5e9;color:#2e7d32}
+.btn-preview-share{background:#fff3e0;color:#e65100}
 
 /* 배서 계좌 정보 */
 .endorse-panel{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #c8e6c9}
@@ -531,14 +542,51 @@ function splitHTML(iq){
 // ===== 계좌/첨부 정보 HTML =====
 function accountInfoHTML(iq){
   var bk = iq.bankName||''; var ac = iq.accountNo||''; var fn = iq.attachmentName||'';
+  var fUrl = iq.attachmentUrl||''; var fId = iq.attachmentId||'';
   if(!bk&&!ac&&!fn) return '';
   var h = '<div class="form-section"><h3>입금 계좌 및 첨부파일</h3>';
   h += '<div class="info-grid">';
   h += '<div class="info-item"><div class="lbl">은행명</div><div class="val">'+(bk||'-')+'</div></div>';
   h += '<div class="info-item"><div class="lbl">계좌번호</div><div class="val">'+(ac||'-')+'</div></div>';
-  if(fn) h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서)</div><div class="val">'+fn+'</div></div>';
+  if(fn){
+    h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서)</div>';
+    if(fUrl){
+      h += '<div class="attach-preview">';
+      // 이미지 미리보기
+      var isImage = /\.(jpg|jpeg|png)$/i.test(fn);
+      if(isImage && fId){
+        h += '<img src="https://drive.google.com/thumbnail?id='+fId+'&sz=w400" alt="'+fn+'">';
+      } else {
+        h += '<div class="pdf-icon">📄</div>';
+      }
+      h += '<div class="file-label">'+fn+'</div>';
+      h += '<div class="attach-btns">';
+      h += '<a href="'+fUrl+'" target="_blank" class="btn-preview-view">보기</a>';
+      if(fId) h += '<a href="https://drive.google.com/uc?export=download&id='+fId+'" target="_blank" class="btn-preview-dl">다운로드</a>';
+      h += '<button class="btn-preview-share" onclick="copyShareLink(\''+fUrl+'\')">링크복사</button>';
+      h += '</div></div>';
+    } else {
+      h += '<div class="val">'+fn+'</div>';
+    }
+    h += '</div>';
+  }
   h += '</div></div>';
   return h;
+}
+
+// ===== 공유 링크 복사 =====
+function copyShareLink(url){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('링크가 복사되었습니다. 카톡 등에 붙여넣기 하세요.','ok');
+    });
+  } else {
+    var t = document.createElement('textarea');
+    t.value = url; document.body.appendChild(t);
+    t.select(); document.execCommand('copy');
+    document.body.removeChild(t);
+    showToast('링크가 복사되었습니다.','ok');
+  }
 }
 
 // ===== 배서 계좌 정보 HTML =====
@@ -599,9 +647,10 @@ function openModal(idx){
       +'<div class="row2"><div class="field"><label>은행명</label><input type="text" id="fBankName" value="'+(iq.bankName||'')+'" placeholder="은행명 입력"></div>'
       +'<div class="field"><label>계좌번호</label><input type="text" id="fAccountNo" value="'+(iq.accountNo||'')+'" placeholder="계좌번호 입력" inputmode="numeric"></div></div>'
       +'<div class="field"><label>첨부파일 (매출계산서)</label>'
-      +'<div class="file-area" onclick="$(\'fileInput\').click()"><div class="icon">📎</div><div class="text">클릭하여 파일 업로드</div></div>'
-      +'<input type="file" id="fileInput" class="file-input" onchange="onFileSelect(this)" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls">'
+      +'<div class="file-area" onclick="$(\'fileInput\').click()"><div class="icon">📎</div><div class="text">클릭하여 파일 업로드<br><span style=\'font-size:0.7rem;color:#aaa\'>jpg, png, pdf 지원 (최대 5MB)</span></div></div>'
+      +'<input type="file" id="fileInput" class="file-input" onchange="onFileSelect(this)" accept=".pdf,.jpg,.jpeg,.png">'
       +'<div class="file-name" id="fileName">'+(iq.attachmentName||'')+'</div>'
+      +'<div id="filePreviewArea"></div>'
       +'</div></div>';
     html += '<div class="btn-row">'
       +'<button class="btn btn-warn" onclick="showEditMode()">정보수정</button>'
@@ -683,10 +732,54 @@ function doRequestProceed(){
 }
 
 // ===== 파일 선택 =====
+var selectedFile = null;
 function onFileSelect(el){
   if(el.files&&el.files[0]){
+    selectedFile = el.files[0];
     $('fileName').textContent = el.files[0].name;
+    // 미리보기 표시
+    var previewArea = $('filePreviewArea');
+    if(previewArea){
+      var f = el.files[0];
+      if(f.type.indexOf('image')>=0){
+        var reader = new FileReader();
+        reader.onload = function(e){ previewArea.innerHTML = '<img src="'+e.target.result+'" style="max-width:100%;border-radius:8px;margin-top:8px">'; };
+        reader.readAsDataURL(f);
+      } else {
+        previewArea.innerHTML = '<div style="text-align:center;padding:12px;margin-top:8px;background:#fff3e0;border-radius:8px"><span style="font-size:2rem">📄</span><div style="font-size:0.8rem;color:#e65100;margin-top:4px">'+f.name+'</div></div>';
+      }
+    }
   }
+}
+
+// ===== 파일 Drive 업로드 =====
+function uploadFileToDrive(file){
+  return new Promise(function(resolve,reject){
+    if(!file){ resolve(null); return; }
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var base64 = e.target.result.split(',')[1];
+      fetch(API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:JSON.stringify({
+          action:'uploadFile',
+          fileName:file.name,
+          mimeType:file.type,
+          fileData:base64
+        }),
+        redirect:'follow'
+      })
+      .then(function(r){return r.json()})
+      .then(function(data){
+        if(data.success) resolve(data);
+        else reject(data.error||'Upload failed');
+      })
+      .catch(reject);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ===== 액션: 저장 및 배서 (입력→배서) =====
@@ -697,8 +790,6 @@ function doSaveAndEndorse(){
   if(currentIdx<0) return;
   var bankName = $('fBankName')?$('fBankName').value.trim():'';
   var accountNo = $('fAccountNo')?$('fAccountNo').value.trim():'';
-  var fileEl = $('fileInput');
-  var fileName = (fileEl&&fileEl.files&&fileEl.files[0])?fileEl.files[0].name:'';
 
   if(!bankName||!accountNo){
     showToast('은행명과 계좌번호를 입력해주세요.','err');
@@ -706,7 +797,7 @@ function doSaveAndEndorse(){
   }
 
   // 팝업으로 확인
-  pendingAccountData = { bankName:bankName, accountNo:accountNo, fileName:fileName };
+  pendingAccountData = { bankName:bankName, accountNo:accountNo, file:selectedFile };
   $('confirmBank').textContent = bankName;
   $('confirmAccount').textContent = accountNo;
   $('btnAccountConfirm').disabled = false;
@@ -727,16 +818,32 @@ function doAccountConfirm(){
 
   var iq = allBills[currentIdx];
   var d = pendingAccountData;
-  var payload = {
-    action:'updateBill',
-    uid:iq.uid,
-    bankName:d.bankName,
-    accountNo:d.accountNo,
-    attachmentName:d.fileName||iq.attachmentName,
-    status:'endorse',
-    _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo
-  };
-  updateBillAPI(payload).then(function(){
+
+  // 파일이 있으면 먼저 Drive에 업로드
+  var uploadPromise;
+  if(d.file){
+    btn.textContent = '파일 업로드 중...';
+    uploadPromise = uploadFileToDrive(d.file);
+  } else {
+    uploadPromise = Promise.resolve(null);
+  }
+
+  uploadPromise.then(function(fileResult){
+    btn.textContent = '저장 중...';
+    var payload = {
+      action:'updateBill',
+      uid:iq.uid,
+      bankName:d.bankName,
+      accountNo:d.accountNo,
+      attachmentName: fileResult ? fileResult.fileName : (iq.attachmentName||''),
+      attachmentUrl: fileResult ? fileResult.fileUrl : (iq.attachmentUrl||''),
+      attachmentId: fileResult ? fileResult.fileId : (iq.attachmentId||''),
+      status:'endorse',
+      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo
+    };
+    return updateBillAPI(payload);
+  }).then(function(){
+    selectedFile = null;
     return loadAll();
   }).then(function(){
     $('accountOverlay').classList.remove('show');
@@ -744,6 +851,11 @@ function doAccountConfirm(){
     renderDashboard(); renderList();
     showToast('저장 완료 — 배서 단계로 이동합니다.','ok');
     openModal(currentIdx);
+  }).catch(function(err){
+    console.error('Upload/Save error:', err);
+    btn.disabled = false;
+    btn.textContent = '입력완료';
+    showToast('저장 실패: '+err,'err');
   });
 }
 
