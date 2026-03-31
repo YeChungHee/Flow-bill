@@ -834,7 +834,7 @@ function discountReadHTML(iq){
 
 // ===== 읽기전용 분할배서 =====
 function splitReadHTML(iq){
-  if(!iq.splitEndorsement) return '<div style="font-size:0.82rem;color:#888;padding:8px 0;margin-bottom:12px">분할배서 안함</div>';
+  if(!iq.splitEndorsement || !iq.splitCount || iq.splitCount <= 1) return '';
   var h='<div class="split-section" style="border:none"><h3>분할배서 조건 ('+iq.splitCount+'장)</h3>';
   for(var i=0;i<iq.splitCount;i++){
     h+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem"><span style="color:#888">'+(i+1)+'장</span><span style="font-weight:700">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';

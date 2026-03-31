@@ -463,7 +463,7 @@ function discountHTML(iq){
 
 // ===== 분할배서 HTML =====
 function splitHTML(iq){
-  if(!iq.splitEndorsement) return '';
+  if(!iq.splitEndorsement || !iq.splitCount || iq.splitCount <= 1) return '';
   var h = '<div class="split-panel"><h4>분할배서 조건 ('+iq.splitCount+'장)</h4>';
   for(var i=0;i<iq.splitCount;i++){
     h += '<div class="split-row"><span class="sn">'+(i+1)+'장</span><span class="sa">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';
