@@ -431,7 +431,7 @@ $('btnSubmit').addEventListener('click',function(){
   }
 
   // 확인 팝업
-  if(!confirm('할인 문의를 전송하시겠습니까?\n\n수취사: '+applyName+'\n발행사: '+issuerName+'\n어음금액: '+$('billAmount').value+'원')) return;
+  if(!confirm('할인 문의를 전송하시겠습니까?\n\n수취사: '+applyName+'\n발행사: '+issuerName+'\n어음금액: '+$('billAmount').value+'원\n만기일: '+$('billDue').value)) return;
 
   // 중복 클릭 방지
   isSubmitting = true;
