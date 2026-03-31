@@ -695,6 +695,8 @@ function doCancel(){
   if(currentIdx<0) return;
   if(!confirm('정말 취소하시겠습니까?')) return;
   var iq = allBills[currentIdx];
+  var btn = event&&event.target?event.target:null;
+  if(btn){btn.disabled=true;btn.textContent='취소 중...';}
   var payload = {
     action:'updateBill',
     uid:iq.uid,
@@ -715,6 +717,8 @@ function doCancel(){
 function doRequestProceed(){
   if(currentIdx<0) return;
   var iq = allBills[currentIdx];
+  var btn = event&&event.target?event.target:null;
+  if(btn){btn.disabled=true;btn.textContent='요청 중...';}
   var payload = {
     action:'updateBill',
     uid:iq.uid,
@@ -726,7 +730,6 @@ function doRequestProceed(){
   }).then(function(){
     renderDashboard(); renderList();
     showToast('진행요청 완료 — 계좌정보를 입력해주세요.','ok');
-    // 모달 새로고침
     openModal(currentIdx);
   });
 }
@@ -943,6 +946,9 @@ function doEditComplete(){
     slackMsg += '\n할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원';
   }
 
+  var btn = event&&event.target?event.target:null;
+  if(btn){btn.disabled=true;btn.textContent='저장 중...';}
+
   var payload = {
     action:'updateBill',
     uid:iq.uid,
@@ -969,7 +975,10 @@ function doEditComplete(){
 // ===== 액션: 배서완료 (배서→관리자 입금완료 대기) =====
 function doEndorseComplete(){
   if(currentIdx<0) return;
+  if(!confirm('배서를 완료하시겠습니까?')) return;
   var iq = allBills[currentIdx];
+  var btn = event&&event.target?event.target:null;
+  if(btn){btn.disabled=true;btn.textContent='처리 중...';}
   var payload = {
     action:'updateBill',
     uid:iq.uid,

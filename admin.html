@@ -338,7 +338,9 @@ function startAutoRefresh(){
 function doPin(){
   var input = $('pinInput').value;
   var msgEl = $('pinMsg');
+  var btn = document.querySelector('.pin-btn');
   if(input === ADMIN_PIN){
+    btn.disabled=true; btn.textContent='인증 중...';
     $('pinScreen').style.display = 'none';
     $('adminScreen').style.display = 'block';
     loadAll().then(function(data){
@@ -346,6 +348,7 @@ function doPin(){
       renderDashboard();
       renderList();
       startAutoRefresh();
+      btn.disabled=false; btn.textContent='확인';
     });
   } else {
     msgEl.textContent = 'PIN이 올바르지 않습니다.';
@@ -810,6 +813,8 @@ function closePopup(){$('popupOverlay').classList.remove('show');}
 // ===== 입금완료 (배서→완료) =====
 function doDepositComplete(){
   if(currentIdx<0) return;
+  if(!confirm('입금완료 처리하시겠습니까?')) return;
+  var btn=event.target; btn.disabled=true; btn.textContent='처리 중...';
   var iq=list[currentIdx];
   var depositDate=new Date().toLocaleDateString('ko-KR');
 
@@ -828,6 +833,9 @@ function doDepositComplete(){
       showToast('입금완료 처리되었습니다.','ok');
       closeModal();
     });
+  }).catch(function(err){
+    btn.disabled=false; btn.textContent='입금완료';
+    showToast('처리 실패: '+err,'err');
   });
 }
 
