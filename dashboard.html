@@ -551,7 +551,7 @@ function splitHTML(iq){
 // ===== 계좌/첨부 정보 HTML =====
 function accountInfoHTML(iq){
   var bk = iq.bankName||''; var ac = iq.accountNo||''; var fn = iq.attachmentName||'';
-  var fUrl = iq.attachmentUrl||''; var fId = iq.attachmentId||'';
+  var fData = iq.attachmentData||''; var fType = iq.attachmentType||'';
   if(!bk&&!ac&&!fn) return '';
   var h = '<div class="form-section"><h3>입금 계좌 및 첨부파일</h3>';
   h += '<div class="info-grid">';
@@ -559,20 +559,17 @@ function accountInfoHTML(iq){
   h += '<div class="info-item"><div class="lbl">계좌번호</div><div class="val">'+(ac||'-')+'</div></div>';
   if(fn){
     h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서)</div>';
-    if(fUrl){
+    if(fData){
       h += '<div class="attach-preview">';
-      // 이미지 미리보기
-      var isImage = /\.(jpg|jpeg|png)$/i.test(fn);
-      if(isImage && fId){
-        h += '<img src="https://drive.google.com/thumbnail?id='+fId+'&sz=w400" alt="'+fn+'">';
+      var isImage = fType.indexOf('image')>=0;
+      if(isImage){
+        h += '<img src="'+fData+'" alt="'+fn+'" style="max-width:100%;border-radius:8px">';
       } else {
-        h += '<div class="pdf-icon">📄</div>';
+        h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
       }
       h += '<div class="file-label">'+fn+'</div>';
       h += '<div class="attach-btns">';
-      h += '<a href="'+fUrl+'" target="_blank" class="btn-preview-view">보기</a>';
-      if(fId) h += '<a href="https://drive.google.com/uc?export=download&id='+fId+'" target="_blank" class="btn-preview-dl">다운로드</a>';
-      h += '<button class="btn-preview-share" onclick="copyShareLink(\''+fUrl+'\')">링크복사</button>';
+      h += '<a href="'+fData+'" download="'+fn+'" class="btn-preview-dl">다운로드</a>';
       h += '</div></div>';
     } else {
       h += '<div class="val">'+fn+'</div>';
@@ -772,33 +769,42 @@ function onFileSelect(el){
   }
 }
 
-// ===== 파일 Drive 업로드 =====
-function uploadFileToDrive(file){
+// ===== 파일 압축 + base64 변환 (Drive 미사용, 시트 직접 저장) =====
+function compressAndEncode(file){
   return new Promise(function(resolve,reject){
     if(!file){ resolve(null); return; }
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var base64 = e.target.result.split(',')[1];
-      fetch(API_URL,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({
-          action:'uploadFile',
-          fileName:file.name,
-          mimeType:file.type,
-          fileData:base64
-        }),
-        redirect:'follow'
-      })
-      .then(function(r){return r.json()})
-      .then(function(data){
-        if(data.success) resolve(data);
-        else reject(data.error||'Upload failed');
-      })
-      .catch(reject);
+    // PDF는 base64만 (압축 불가)
+    if(file.type==='application/pdf'){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var dataUrl = e.target.result;
+        resolve({ fileName:file.name, mimeType:file.type, dataUrl:dataUrl });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    // 이미지: Canvas로 리사이즈 후 압축
+    var img = new Image();
+    img.onload = function(){
+      var maxW = 800, maxH = 800;
+      var w = img.width, h = img.height;
+      if(w>maxW||h>maxH){
+        var ratio = Math.min(maxW/w, maxH/h);
+        w = Math.round(w*ratio);
+        h = Math.round(h*ratio);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      resolve({ fileName:file.name, mimeType:'image/jpeg', dataUrl:dataUrl });
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = reject;
+    var r = new FileReader();
+    r.onload = function(e){ img.src = e.target.result; };
+    r.readAsDataURL(file);
   });
 }
 
@@ -839,9 +845,6 @@ function doAccountConfirm(){
   var iq = allBills[currentIdx];
   var d = pendingAccountData;
 
-  // 파일 업로드 시도 (실패해도 계좌 저장은 진행)
-  var fileUploadResult = null;
-
   function doSaveAccount(fileResult){
     btn.textContent = '저장 중...';
     var payload = {
@@ -849,11 +852,11 @@ function doAccountConfirm(){
       uid:iq.uid,
       bankName:d.bankName,
       accountNo:d.accountNo,
-      attachmentName: fileResult ? fileResult.fileName : (d.file ? d.file.name : (iq.attachmentName||'')),
-      attachmentUrl: fileResult ? fileResult.fileUrl : (iq.attachmentUrl||''),
-      attachmentId: fileResult ? fileResult.fileId : (iq.attachmentId||''),
+      attachmentName: fileResult ? fileResult.fileName : (iq.attachmentName||''),
+      attachmentData: fileResult ? fileResult.dataUrl : (iq.attachmentData||''),
+      attachmentType: fileResult ? fileResult.mimeType : (iq.attachmentType||''),
       status:'endorse',
-      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo
+      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo+(fileResult?' (첨부파일 있음)':'')
     };
     return updateBillAPI(payload).then(function(){
       selectedFile = null;
@@ -862,19 +865,17 @@ function doAccountConfirm(){
       $('accountOverlay').classList.remove('show');
       pendingAccountData = null;
       renderDashboard(); renderList();
-      var msg = '저장 완료 — 배서 단계로 이동합니다.';
-      if(d.file && !fileResult) msg += ' (첨부파일은 별도 업로드 필요)';
-      showToast(msg,'ok');
+      showToast('저장 완료 — 배서 단계로 이동합니다.','ok');
       openModal(currentIdx);
     });
   }
 
   if(d.file){
-    btn.textContent = '파일 업로드 중...';
-    uploadFileToDrive(d.file).then(function(result){
+    btn.textContent = '파일 변환 중...';
+    compressAndEncode(d.file).then(function(result){
       doSaveAccount(result);
-    }).catch(function(uploadErr){
-      console.warn('파일 업로드 실패, 계좌만 저장:', uploadErr);
+    }).catch(function(err){
+      console.warn('파일 변환 실패, 계좌만 저장:', err);
       doSaveAccount(null);
     });
   } else {
