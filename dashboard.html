@@ -291,7 +291,11 @@ function isHoliday(d){var y=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2
 function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;return !isHoliday(d);}
 function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
 function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function calcDiscount(amount,rate,days){return Math.round(amount*(rate/100)/30*days)+1500;}
+function calcDiscount(amount,rate,days,splitCount){
+  var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
+  var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
+  return baseFee + extraSplit;
+}
 
 // ===== Global State =====
 var allBills = [];
@@ -718,7 +722,7 @@ function doEditComplete(){
   var fee = iq.fee;
   var net = iq.net;
   if(iq.rate){
-    fee = calcDiscount(newAmount, iq.rate, usageDays);
+    fee = calcDiscount(newAmount, iq.rate, usageDays, iq.splitCount||1);
     net = newAmount - fee;
   }
 

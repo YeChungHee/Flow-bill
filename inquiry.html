@@ -321,7 +321,11 @@ function loadAll(){
 }
 
 // ===== 제출 핸들러 =====
+var isSubmitting = false;
+
 $('btnSubmit').addEventListener('click',function(){
+  if(isSubmitting) return;
+
   var applyName=$('applyName').value.trim();
   var applyBiz=$('applyBiz').value.trim();
   var issuerName=$('issuerName').value.trim();
@@ -336,6 +340,15 @@ $('btnSubmit').addEventListener('click',function(){
     showMsg('모든 필수 항목을 입력해주세요.','err');
     return;
   }
+
+  // 확인 팝업
+  if(!confirm('할인 문의를 전송하시겠습니까?\n\n신청업체: '+applyName+'\n발행사: '+issuerName+'\n어음금액: '+$('billAmount').value+'원')) return;
+
+  // 중복 클릭 방지
+  isSubmitting = true;
+  var btn = $('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '전송 중...';
 
   // Slack 메시지 구성
   var slackText=buildSlackText();
@@ -370,6 +383,9 @@ $('btnSubmit').addEventListener('click',function(){
   }).catch(function(e){
     console.error('Submit error:',e);
     showMsg('전송 중 오류가 발생했습니다.','err');
+    isSubmitting = false;
+    btn.disabled = false;
+    btn.textContent = '할인 조회 신청';
   });
 });
 

@@ -327,7 +327,11 @@ function isHoliday(d){var y=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2
 function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;return !isHoliday(d);}
 function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
 function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function calcDiscount(amount,rate,days){return Math.round(amount*(rate/100)/30*days)+1500;}
+function calcDiscount(amount,rate,days,splitCount){
+  var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
+  var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
+  return baseFee + extraSplit;
+}
 
 // ===== Data from API =====
 var list = [];
@@ -575,10 +579,11 @@ function calcAdmin(){
   var days=parseInt(iq.usageDays)||0;
   var amount=iq.billAmount||0;
   if(!rate||!days||!amount){$('aCalcResult').style.display='none';return;}
-  var fee=calcDiscount(amount,rate,days);
+  var splitCnt = ($('splitCheck')&&$('splitCheck').checked) ? (parseInt($('splitCountSel').value)||1) : 1;
+  var fee=calcDiscount(amount,rate,days,splitCnt);
   var net=amount-fee;
   $('arAmount').textContent='\u20a9'+fmt(amount)+'원';
-  $('arFee').textContent='\u20a9'+fmt(fee)+'원';
+  $('arFee').textContent='\u20a9'+fmt(fee)+'원'+(splitCnt>1?' (분할 추가 '+fmt((splitCnt-1)*1500)+'원 포함)':'');
   $('arNet').textContent='\u20a9'+fmt(net)+'원';
   $('aCalcResult').style.display='block';
 }
@@ -589,7 +594,7 @@ function splitInputHTML(iq){
     +'<label class="split-check"><input type="checkbox" id="splitCheck" onchange="toggleSplitUI()"> 분할배서 적용</label>'
     +'<div id="splitArea" style="display:none">'
     +'<div class="field"><label>매수 선택 (1~5장)</label>'
-    +'<select id="splitCountSel" onchange="updateSplitFields()">'
+    +'<select id="splitCountSel" onchange="updateSplitFields();calcAdmin()">'
     +'<option value="1">1장</option><option value="2">2장</option><option value="3" selected>3장</option><option value="4">4장</option><option value="5">5장</option>'
     +'</select></div>'
     +'<div id="splitFields"></div>'
@@ -604,6 +609,7 @@ function toggleSplitUI(){
   $('splitArea').style.display=checked?'block':'none';
   $('noSplitMsg').style.display=checked?'none':'block';
   if(checked) updateSplitFields();
+  calcAdmin();
 }
 
 function updateSplitFields(){
@@ -647,15 +653,16 @@ function doAdminSave(){
 
   var iq=list[currentIdx];
   var days=parseInt(iq.usageDays)||0;
-  var fee=calcDiscount(iq.billAmount,rate,days);
-  var net=iq.billAmount-fee;
 
   // 분할배서
   var splitOn=$('splitCheck')&&$('splitCheck').checked;
   var splitCount=0,splitAmounts=[];
+  if(splitOn) splitCount=parseInt($('splitCountSel').value)||0;
+
+  var fee=calcDiscount(iq.billAmount,rate,days,splitOn?splitCount:1);
+  var net=iq.billAmount-fee;
 
   if(splitOn){
-    splitCount=parseInt($('splitCountSel').value)||0;
     var sum=0;
     for(var i=0;i<splitCount;i++){
       var el=$('sa'+i);
