@@ -321,6 +321,19 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
 var ADMIN_PIN = '0000';
 
+// ===== 자동 새로고침 (30초) =====
+var autoRefreshTimer = null;
+function startAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(function(){
+    loadAll().then(function(data){
+      list = data;
+      renderDashboard();
+      renderList();
+    });
+  }, 30000);
+}
+
 // ===== PIN 인증 =====
 function doPin(){
   var input = $('pinInput').value;
@@ -332,6 +345,7 @@ function doPin(){
       list = data;
       renderDashboard();
       renderList();
+      startAutoRefresh();
     });
   } else {
     msgEl.textContent = 'PIN이 올바르지 않습니다.';

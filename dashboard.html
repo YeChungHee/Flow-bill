@@ -324,10 +324,12 @@ function doLogin(){
     $('loginInfo').innerHTML = '사업자번호: <strong>'+currentBiz+'</strong>';
     renderDashboard();
     renderList();
+    startAutoRefresh();
   });
 }
 
 function doLogout(){
+  stopAutoRefresh();
   currentBiz = '';
   allBills = [];
   $('dashScreen').style.display = 'none';
@@ -781,6 +783,22 @@ function showToast(msg,type){
 // ===== ESC =====
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
 
+// ===== 자동 새로고침 (30초) =====
+var autoRefreshTimer = null;
+function startAutoRefresh(){
+  if(autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(function(){
+    if(!currentBiz) return;
+    loadAll().then(function(){
+      renderDashboard();
+      renderList();
+    });
+  }, 30000);
+}
+function stopAutoRefresh(){
+  if(autoRefreshTimer){ clearInterval(autoRefreshTimer); autoRefreshTimer=null; }
+}
+
 // ===== 초기화 =====
 (function init(){
   // URL 파라미터에 사업자번호가 있으면 자동 진입
@@ -794,6 +812,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()
       $('loginInfo').innerHTML = '사업자번호: <strong>'+currentBiz+'</strong>';
       renderDashboard();
       renderList();
+      startAutoRefresh();
     });
   }
 })();
