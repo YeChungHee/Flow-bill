@@ -428,6 +428,12 @@ function loadAll(){
     .then(function(data){
       console.log('API raw response:', data);
       var all = toArray(data);
+      // splitAmounts 문자열→배열 파싱
+      all.forEach(function(item){
+        if(item.splitAmounts && typeof item.splitAmounts==='string'){
+          try{ item.splitAmounts=JSON.parse(item.splitAmounts); }catch(e){ item.splitAmounts=[]; }
+        }
+      });
       // 사업자번호로 필터링
       if(currentBiz){
         var bizClean = currentBiz.replace(/[^0-9]/g,'');
@@ -535,6 +541,8 @@ function splitHTML(iq){
   for(var i=0;i<iq.splitCount;i++){
     h += '<div class="split-row"><span class="sn">'+(i+1)+'장</span><span class="sa">\u20a9'+fmt(iq.splitAmounts[i])+'원</span></div>';
   }
+  h += '<div style="margin-top:10px;padding:10px 12px;background:#fff3e0;border:1.5px solid #ff9800;border-radius:8px;font-size:0.8rem;color:#e65100;font-weight:600;line-height:1.5">'
+    +'⚠️ 중요! 배서 진행시 분할배서 선택 후 제시된 금액으로 나누어 배서해 주세요.</div>';
   h += '</div>';
   return h;
 }

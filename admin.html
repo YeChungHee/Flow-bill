@@ -412,7 +412,13 @@ function loadAll(){
     .then(function(r){return r.json()})
     .then(function(data){
       console.log('API raw response:', data);
-      return toArray(data);
+      var all = toArray(data);
+      all.forEach(function(item){
+        if(item.splitAmounts && typeof item.splitAmounts==='string'){
+          try{ item.splitAmounts=JSON.parse(item.splitAmounts); }catch(e){ item.splitAmounts=[]; }
+        }
+      });
+      return all;
     })
     .catch(function(e){
       console.error('Failed to load bills:', e);
@@ -755,7 +761,7 @@ function doAdminSave(){
     processedAt: new Date().toLocaleString('ko-KR'),
     splitEndorsement: !!splitOn,
     splitCount: splitCount,
-    splitAmounts: splitAmounts,
+    splitAmounts: JSON.stringify(splitAmounts),
     _slackText: '[할인 조건 전달] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
   };
 
