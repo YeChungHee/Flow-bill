@@ -137,6 +137,26 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 .popup .diff.minus{color:#1565c0}
 .popup-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888}
 
+/* 할인조건 확인 팝업 */
+.confirm-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3500;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto}
+.confirm-overlay.show{display:flex}
+.confirm-box{background:#fff;border-radius:16px;padding:24px;max-width:460px;width:95%;margin:60px auto;box-shadow:0 8px 40px rgba(0,0,0,0.25)}
+.confirm-box h3{text-align:center;color:#1565c0;font-size:1rem;margin-bottom:16px}
+.confirm-row{display:flex;justify-content:space-between;padding:8px 0;font-size:0.88rem;border-bottom:1px solid #f0f0f0}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row .cl{color:#888}.confirm-row .cv{font-weight:700;color:#333}
+.confirm-row .cv.fee{color:#e65100}.confirm-row .cv.net{color:#2e7d32}
+.confirm-split{background:#fff8e1;border-radius:10px;padding:12px;margin:10px 0}
+.confirm-split-title{font-size:0.82rem;font-weight:700;color:#f57f17;margin-bottom:6px}
+.confirm-split-row{display:flex;justify-content:space-between;font-size:0.85rem;padding:3px 0}
+.confirm-btn-row{display:flex;gap:10px;margin-top:18px}
+.confirm-btn-row .btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-edit{background:#f5f5f5;color:#666}
+.btn-edit:hover{background:#e0e0e0;color:#333}
+.btn-send{background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3)}
+.btn-send:hover{transform:translateY(-1px)}
+.btn-send:disabled{opacity:0.6;transform:none;cursor:not-allowed}
+
 .footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
 
 /* PIN 인증 화면 */
@@ -279,6 +299,18 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
     <div class="detail" id="popSum">합계액: -</div>
     <div class="diff" id="popDiff">차액: -</div>
     <p style="font-size:0.8rem;color:#888;margin-top:10px">X를 눌러 닫고 금액을 수정해주세요.</p>
+  </div>
+</div>
+
+<!-- 할인조건 확인 팝업 -->
+<div class="confirm-overlay" id="confirmOverlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <h3>할인 조건 확인</h3>
+    <div id="confirmBody"></div>
+    <div class="confirm-btn-row">
+      <button class="btn btn-edit" onclick="closeConfirm()">수정하기</button>
+      <button class="btn btn-send" id="btnConfirmSend" onclick="doConfirmSend()">전송하기</button>
+    </div>
   </div>
 </div>
 
@@ -646,6 +678,8 @@ function updateSplitTotal(){
 }
 
 // ===== 관리자 저장 (대기→선택) =====
+var pendingUpdateData = null; // 전송 대기 데이터
+
 function doAdminSave(){
   if(currentIdx<0) return;
   var rate=parseFloat($('aRate').value)||0;
@@ -684,7 +718,8 @@ function doAdminSave(){
     }
   }
 
-  var updateData = {
+  // 전송 데이터 임시 저장
+  pendingUpdateData = {
     rate: rate,
     fee: fee,
     net: net,
@@ -696,12 +731,49 @@ function doAdminSave(){
     _slackText: '[할인 조건 전달] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
   };
 
-  updateBillAPI(iq.uid, updateData).then(function(){
-    // Reload data from API
+  // 확인 팝업 내용 생성
+  var extraSplit = (splitOn && splitCount > 1) ? (splitCount-1)*1500 : 0;
+  var h = '';
+  h += '<div class="confirm-row"><span class="cl">신청업체</span><span class="cv">'+(iq.applyName||'-')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">발행사</span><span class="cv">'+(iq.issuerName||'-')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">어음금액</span><span class="cv">\u20a9'+fmt(iq.billAmount)+'원</span></div>';
+  h += '<div class="confirm-row"><span class="cl">만기일</span><span class="cv">'+(iq.billDue||'-')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">사용일수</span><span class="cv">'+days+'일</span></div>';
+  h += '<div class="confirm-row"><span class="cl">월할인율</span><span class="cv">'+rate+'%</span></div>';
+  h += '<div class="confirm-row"><span class="cl">할인액 (수수료 포함)</span><span class="cv fee">\u20a9'+fmt(fee)+'원'+(extraSplit>0?' (분할 추가 '+fmt(extraSplit)+'원)':'')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">입금액</span><span class="cv net">\u20a9'+fmt(net)+'원</span></div>';
+  if(splitOn){
+    h += '<div class="confirm-split"><div class="confirm-split-title">분할배서 ('+splitCount+'장)</div>';
+    for(var i=0;i<splitCount;i++){
+      h += '<div class="confirm-split-row"><span>'+(i+1)+'장</span><span style="font-weight:700">\u20a9'+fmt(splitAmounts[i])+'원</span></div>';
+    }
+    h += '</div>';
+  }
+  $('confirmBody').innerHTML = h;
+  $('btnConfirmSend').disabled = false;
+  $('btnConfirmSend').textContent = '전송하기';
+  $('confirmOverlay').classList.add('show');
+}
+
+function closeConfirm(){
+  $('confirmOverlay').classList.remove('show');
+  pendingUpdateData = null;
+}
+
+function doConfirmSend(){
+  if(!pendingUpdateData || currentIdx<0) return;
+  var btn = $('btnConfirmSend');
+  btn.disabled = true;
+  btn.textContent = '전송 중...';
+
+  var iq = list[currentIdx];
+  updateBillAPI(iq.uid, pendingUpdateData).then(function(){
     loadAll().then(function(data){
       list = data;
       renderDashboard();
       renderList();
+      $('confirmOverlay').classList.remove('show');
+      pendingUpdateData = null;
       showToast('저장 완료 — 신청자에게 전달되었습니다.','ok');
       closeModal();
     });
