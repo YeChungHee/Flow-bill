@@ -54,6 +54,13 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .rate-info{color:#2e7d32;font-size:0.78rem;margin-top:2px}
 .empty{text-align:center;color:#bbb;padding:30px;font-size:0.88rem}
+/* 이전 발행사 리스트 */
+.issuer-chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}
+.issuer-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:20px;font-size:0.8rem;color:#1565c0;cursor:pointer;font-weight:600;transition:all 0.15s}
+.issuer-chip:hover{background:#bbdefb;border-color:#42a5f5}
+.issuer-chip .ic-biz{color:#888;font-weight:400;font-size:0.75rem}
+.issuer-new{background:#fff8e1;border-color:#ffe082;color:#f57f17}
+.issuer-new:hover{background:#fff3e0;border-color:#ffb74d}
 .footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
 
 /* === 반응형 === */
@@ -92,30 +99,32 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
     <a class="nav-tab" href="dashboard.html">내 신청현황</a>
   </div>
 
-  <!-- 신청 업체 정보 -->
+  <!-- 수취사 정보 -->
   <div class="card">
-    <h2>신청 업체 정보</h2>
-    <div class="field">
-      <label>업체명</label>
-      <input type="text" id="applyName" placeholder="신청 업체명 입력">
-    </div>
+    <h2>수취사 정보</h2>
     <div class="field">
       <label>사업자번호</label>
-      <input type="text" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)">
+      <input type="text" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkAutoFill()">
     </div>
+    <div class="field">
+      <label>수취사</label>
+      <input type="text" id="applyName" placeholder="수취사명 입력">
+    </div>
+    <div id="autoFillMsg" style="display:none;font-size:0.78rem;color:#2e7d32;padding:4px 0;font-weight:600"></div>
   </div>
 
   <!-- 어음 정보 -->
   <div class="card">
     <h2>어음 정보</h2>
     <div class="field">
+      <label>발행사 사업자번호</label>
+      <input type="text" id="issuerBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkIssuerAutoFill()">
+    </div>
+    <div class="field">
       <label>발행사명</label>
       <input type="text" id="issuerName" placeholder="발행사명 입력">
     </div>
-    <div class="field">
-      <label>발행사 사업자번호</label>
-      <input type="text" id="issuerBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)">
-    </div>
+    <div id="issuerList" style="display:none"></div>
     <div class="field">
       <label>어음금액 (원)</label>
       <input type="text" id="billAmount" placeholder="금액 입력" inputmode="numeric" oninput="formatAmount(this)">
@@ -126,7 +135,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
     </div>
     <div class="row2">
       <div class="field">
-        <label>조회일</label>
+        <label>입금예정일</label>
         <input type="date" id="startDate">
       </div>
       <div class="field">
@@ -206,6 +215,86 @@ function formatBizNo(el){
   var f='';
   if(v.length>3){f=v.substring(0,3)+'-';if(v.length>5){f+=v.substring(3,5)+'-'+v.substring(5)}else{f+=v.substring(3)}}else{f=v}
   el.value=f;
+}
+
+// ===== 자동완성: 사업자번호 기반 =====
+var cachedBills = null;
+
+function fetchBillsForAutoFill(){
+  if(cachedBills) return Promise.resolve(cachedBills);
+  return loadAll().then(function(data){
+    cachedBills = data;
+    return data;
+  });
+}
+
+function checkAutoFill(){
+  var biz = $('applyBiz').value.replace(/[^0-9]/g,'');
+  if(biz.length < 10){ $('autoFillMsg').style.display='none'; $('issuerList').style.display='none'; return; }
+
+  fetchBillsForAutoFill().then(function(bills){
+    var matched = bills.filter(function(x){ return (x.applyBiz||'').replace(/[^0-9]/g,'') === biz; });
+    if(matched.length === 0){ $('autoFillMsg').style.display='none'; $('issuerList').style.display='none'; return; }
+
+    // 수취사명 자동완성
+    var latest = matched[matched.length - 1];
+    if(latest.applyName && !$('applyName').value.trim()){
+      $('applyName').value = latest.applyName;
+    }
+    $('autoFillMsg').textContent = '✓ 이전 신청 내역에서 자동 입력됨';
+    $('autoFillMsg').style.display = 'block';
+
+    // 이전 발행사 목록 (중복 제거)
+    var issuers = {};
+    matched.forEach(function(x){
+      if(x.issuerBiz){
+        var key = (x.issuerBiz||'').replace(/[^0-9]/g,'');
+        if(!issuers[key]) issuers[key] = { name: x.issuerName||'', biz: x.issuerBiz||'' };
+      }
+    });
+    var keys = Object.keys(issuers);
+    if(keys.length > 0){
+      var h = '<div style="font-size:0.78rem;color:#888;padding:4px 0">이전 발행사 선택:</div><div class="issuer-chips">';
+      keys.forEach(function(k){
+        var iss = issuers[k];
+        var bizFmt = formatBizStr(k);
+        h += '<span class="issuer-chip" onclick="selectIssuer(\''+iss.name.replace(/'/g,"\\'")+'\',\''+iss.biz.replace(/'/g,"\\'")+'\')">'+iss.name+' <span class="ic-biz">'+bizFmt+'</span></span>';
+      });
+      h += '<span class="issuer-chip issuer-new" onclick="clearIssuer()">+ 직접 입력</span>';
+      h += '</div>';
+      $('issuerList').innerHTML = h;
+      $('issuerList').style.display = 'block';
+    }
+  });
+}
+
+function checkIssuerAutoFill(){
+  var biz = $('issuerBiz').value.replace(/[^0-9]/g,'');
+  if(biz.length < 10) return;
+
+  fetchBillsForAutoFill().then(function(bills){
+    var matched = bills.filter(function(x){ return (x.issuerBiz||'').replace(/[^0-9]/g,'') === biz; });
+    if(matched.length > 0 && !$('issuerName').value.trim()){
+      $('issuerName').value = matched[matched.length - 1].issuerName || '';
+    }
+  });
+}
+
+function formatBizStr(v){
+  if(v.length>=10) return v.substring(0,3)+'-'+v.substring(3,5)+'-'+v.substring(5,10);
+  return v;
+}
+
+function selectIssuer(name, biz){
+  $('issuerName').value = name;
+  $('issuerBiz').value = biz;
+  formatBizNo($('issuerBiz'));
+}
+
+function clearIssuer(){
+  $('issuerName').value = '';
+  $('issuerBiz').value = '';
+  $('issuerName').focus();
 }
 
 // ===== 대한민국 공휴일 DB (2024-2027) =====
@@ -292,7 +381,7 @@ function buildSlackText(){
   var settle=nextBusinessDay(due);
 
   var text='[전자어음 할인 문의]\n'+
-    '신청: '+applyName+' ('+applyBiz+')\n'+
+    '수취사: '+applyName+' ('+applyBiz+')\n'+
     '발행사: '+issuerName+' ('+issuerBiz+')\n'+
     '어음금액: \uffe6'+formatNumber(amount)+'\uc6d0\n'+
     '만기일: '+due+' → 결제일: '+fmtDate(settle)+'\n'+
@@ -342,7 +431,7 @@ $('btnSubmit').addEventListener('click',function(){
   }
 
   // 확인 팝업
-  if(!confirm('할인 문의를 전송하시겠습니까?\n\n신청업체: '+applyName+'\n발행사: '+issuerName+'\n어음금액: '+$('billAmount').value+'원')) return;
+  if(!confirm('할인 문의를 전송하시겠습니까?\n\n수취사: '+applyName+'\n발행사: '+issuerName+'\n어음금액: '+$('billAmount').value+'원')) return;
 
   // 중복 클릭 방지
   isSubmitting = true;

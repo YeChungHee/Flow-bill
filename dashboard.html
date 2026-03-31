@@ -40,6 +40,19 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.88rem}
+/* 계좌확인 팝업 */
+.account-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3500;justify-content:center;align-items:center;padding:16px}
+.account-overlay.show{display:flex}
+.account-box{background:#fff;border-radius:16px;padding:24px;max-width:400px;width:95%;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center}
+.account-box h3{color:#1565c0;font-size:1rem;margin-bottom:16px}
+.account-detail{background:#e3f2fd;border-radius:12px;padding:16px;margin-bottom:16px}
+.account-detail .ad-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.92rem}
+.account-detail .ad-lbl{color:#666}.account-detail .ad-val{font-weight:700;color:#333}
+.account-btn-row{display:flex;gap:10px;margin-top:14px}
+.account-btn-row .btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-confirm-account{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 4px 12px rgba(46,125,50,0.3)}
+.btn-confirm-account:hover{transform:translateY(-1px)}
+.btn-confirm-account:disabled{opacity:0.6;transform:none;cursor:not-allowed}
 .footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
 
 /* 모달 */
@@ -260,6 +273,22 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   </div>
 </div>
 
+<!-- 계좌 확인 팝업 -->
+<div class="account-overlay" id="accountOverlay">
+  <div class="account-box">
+    <h3>입금 계좌 정보 확인</h3>
+    <div class="account-detail">
+      <div class="ad-row"><span class="ad-lbl">은행명</span><span class="ad-val" id="confirmBank">-</span></div>
+      <div class="ad-row"><span class="ad-lbl">계좌번호</span><span class="ad-val" id="confirmAccount">-</span></div>
+    </div>
+    <p style="font-size:0.82rem;color:#888;margin-bottom:14px">위 계좌 정보가 맞는지 확인해주세요.</p>
+    <div class="account-btn-row">
+      <button class="btn btn-secondary" onclick="closeAccountPopup()">수정</button>
+      <button class="btn btn-confirm-account" id="btnAccountConfirm" onclick="doAccountConfirm()">입력완료</button>
+    </div>
+  </div>
+</div>
+
 <div class="msg-toast" id="toast"></div>
 
 <script>
@@ -278,6 +307,17 @@ var ENDORSE_INFO = {
 function $(id){return document.getElementById(id)}
 function fmt(n){return n?Number(n).toLocaleString('ko-KR'):'0'}
 function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
+// 날짜 정규화: ISO/UTC → 한국시간 YYYY-MM-DD
+function fixDate(v){
+  if(!v) return '';
+  var s = String(v);
+  if(s.indexOf('T')!==-1){
+    var d = new Date(s);
+    d.setMinutes(d.getMinutes() + d.getTimezoneOffset() + 540); // UTC→KST(+9)
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return s.substring(0,10);
+}
 function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
 
 // 공휴일 DB
@@ -424,7 +464,7 @@ function renderList(){
     var bc = badgeClass(iq.status);
     return '<div class="list-item" onclick="openModal('+iq._idx+')">'
       +'<div class="list-top"><span class="list-company">'+((iq.issuerName||'-'))+'</span><span class="list-amount">\u20a9'+fmt(iq.billAmount)+'</span></div>'
-      +'<div class="list-bottom"><span class="list-meta">'+((iq.billDue||'-'))+' · '+((iq.uid||''))+'</span><span class="badge '+bc+'">'+st+'</span></div>'
+      +'<div class="list-bottom"><span class="list-meta">'+((fixDate(iq.billDue)||'-'))+' · '+((iq.uid||''))+'</span><span class="badge '+bc+'">'+st+'</span></div>'
       +'</div>';
   }).join('');
 }
@@ -448,13 +488,13 @@ function baseInfoHTML(iq){
   return '<div class="info-grid">'
     +'<div class="info-item"><div class="lbl">접수번호</div><div class="val">'+(iq.uid||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">접수일시</div><div class="val">'+(iq.timestamp||'-')+'</div></div>'
-    +'<div class="info-item"><div class="lbl">신청업체</div><div class="val">'+(iq.applyName||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">수취사</div><div class="val">'+(iq.applyName||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.applyBiz||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">발행사</div><div class="val">'+(iq.issuerName||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.issuerBiz||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">어음금액</div><div class="val hl">\u20a9'+fmt(iq.billAmount)+'</div></div>'
-    +'<div class="info-item"><div class="lbl">만기일</div><div class="val">'+(iq.billDue||'-')+'</div></div>'
-    +'<div class="info-item"><div class="lbl">조회일</div><div class="val">'+(iq.startDate||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">만기일</div><div class="val">'+(fixDate(iq.billDue)||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">입금예정일</div><div class="val">'+(fixDate(iq.startDate)||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사용일수</div><div class="val hl">'+(iq.usageDays||'-')+'일</div></div>'
     +'</div>';
 }
@@ -564,8 +604,8 @@ function openModal(idx){
       +'<div class="file-name" id="fileName">'+(iq.attachmentName||'')+'</div>'
       +'</div></div>';
     html += '<div class="btn-row">'
-      +'<button class="btn btn-warn" onclick="showEditMode()">수정하기</button>'
-      +'<button class="btn btn-success" onclick="doSaveAndEndorse()">저장 및 배서</button>'
+      +'<button class="btn btn-warn" onclick="showEditMode()">정보수정</button>'
+      +'<button class="btn btn-success" onclick="doSaveAndEndorse()">계좌 입력완료</button>'
       +'</div>';
   }
   else if(st === 'endorse'){
@@ -611,7 +651,7 @@ function doCancel(){
     uid:iq.uid,
     status:'cancel',
     cancelledAt:new Date().toLocaleString('ko-KR'),
-    _slackText:'[취소] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원'
+    _slackText:'[취소] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원'
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
@@ -630,7 +670,7 @@ function doRequestProceed(){
     action:'updateBill',
     uid:iq.uid,
     status:'input',
-    _slackText:'[진행요청] '+iq.issuerName+'\n신청: '+iq.applyName
+    _slackText:'[진행요청] '+iq.issuerName+'\n수취사: '+iq.applyName
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
@@ -650,6 +690,9 @@ function onFileSelect(el){
 }
 
 // ===== 액션: 저장 및 배서 (입력→배서) =====
+// ===== 계좌 확인 팝업 =====
+var pendingAccountData = null;
+
 function doSaveAndEndorse(){
   if(currentIdx<0) return;
   var bankName = $('fBankName')?$('fBankName').value.trim():'';
@@ -662,19 +705,42 @@ function doSaveAndEndorse(){
     return;
   }
 
+  // 팝업으로 확인
+  pendingAccountData = { bankName:bankName, accountNo:accountNo, fileName:fileName };
+  $('confirmBank').textContent = bankName;
+  $('confirmAccount').textContent = accountNo;
+  $('btnAccountConfirm').disabled = false;
+  $('btnAccountConfirm').textContent = '입력완료';
+  $('accountOverlay').classList.add('show');
+}
+
+function closeAccountPopup(){
+  $('accountOverlay').classList.remove('show');
+  pendingAccountData = null;
+}
+
+function doAccountConfirm(){
+  if(!pendingAccountData || currentIdx<0) return;
+  var btn = $('btnAccountConfirm');
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+
   var iq = allBills[currentIdx];
+  var d = pendingAccountData;
   var payload = {
     action:'updateBill',
     uid:iq.uid,
-    bankName:bankName,
-    accountNo:accountNo,
-    attachmentName:fileName||iq.attachmentName,
+    bankName:d.bankName,
+    accountNo:d.accountNo,
+    attachmentName:d.fileName||iq.attachmentName,
     status:'endorse',
-    _slackText:'[배서 요청] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n계좌: '+bankName+' '+accountNo
+    _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
   }).then(function(){
+    $('accountOverlay').classList.remove('show');
+    pendingAccountData = null;
     renderDashboard(); renderList();
     showToast('저장 완료 — 배서 단계로 이동합니다.','ok');
     openModal(currentIdx);
@@ -688,11 +754,11 @@ function showEditMode(){
 
   var html = progressHTML(iq.status);
   html += '<div class="edit-section"><h3>문의 정보 수정</h3>'
-    +'<div class="field"><label>신청업체</label><input type="text" id="eApplyName" value="'+(iq.applyName||'')+'"></div>'
+    +'<div class="field"><label>수취사</label><input type="text" id="eApplyName" value="'+(iq.applyName||'')+'"></div>'
     +'<div class="field"><label>발행사</label><input type="text" id="eIssuerName" value="'+(iq.issuerName||'')+'"></div>'
     +'<div class="field"><label>어음금액 (원)</label><input type="text" id="eAmount" value="'+fmt(iq.billAmount)+'" inputmode="numeric" oninput="editFormatAmount(this)"></div>'
-    +'<div class="row2"><div class="field"><label>조회일</label><input type="date" id="eStartDate" value="'+(iq.startDate||'')+'"></div>'
-    +'<div class="field"><label>만기일</label><input type="date" id="eBillDue" value="'+(iq.billDue||'')+'"></div></div>'
+    +'<div class="field"><label>입금예정일</label><input type="date" id="eStartDate" value="'+(fixDate(iq.startDate)||'')+'"></div>'
+    +'<div class="field"><label>만기일</label><input type="date" id="eBillDue" value="'+(fixDate(iq.billDue)||'')+'"></div>'
     +'</div>';
   html += '<div class="btn-row">'
     +'<button class="btn btn-danger" onclick="doCancelFromEdit()">취소</button>'
@@ -714,7 +780,7 @@ function doCancelFromEdit(){
   doCancel();
 }
 
-// 변경완료 → 정보 업데이트 후 배서 단계로 이동 (6번)
+// 변경완료 → 정보 업데이트 후 계좌입력 단계 유지 (input 상태)
 function doEditComplete(){
   if(currentIdx<0) return;
   var iq = allBills[currentIdx];
@@ -730,6 +796,12 @@ function doEditComplete(){
     return;
   }
 
+  // 변경 사항 감지 (금액, 만기일, 입금예정일)
+  var changes = [];
+  if(newAmount !== (iq.billAmount||0)) changes.push('어음금액: '+fmt(iq.billAmount)+'→'+fmt(newAmount));
+  if(newDue !== (iq.billDue||'')) changes.push('만기일: '+(iq.billDue||'-')+'→'+newDue);
+  if(newStart !== (iq.startDate||'')) changes.push('입금예정일: '+(iq.startDate||'-')+'→'+newStart);
+
   // 사용일수 재계산
   var usageDays = iq.usageDays;
   if(newStart&&newDue){
@@ -744,6 +816,13 @@ function doEditComplete(){
     net = newAmount - fee;
   }
 
+  // 슬랙 통보 메시지 (변경사항 포함)
+  var slackMsg = '[정보수정] '+newIssuer+'\n수취사: '+newApply+'\n어음: \u20a9'+fmt(newAmount)+'원';
+  if(changes.length > 0){
+    slackMsg += '\n⚠ 변경사항: '+changes.join(' / ');
+    slackMsg += '\n할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원';
+  }
+
   var payload = {
     action:'updateBill',
     uid:iq.uid,
@@ -755,14 +834,14 @@ function doEditComplete(){
     usageDays:usageDays,
     fee:fee,
     net:net,
-    status:'endorse',
-    _slackText:'[정보수정] '+newIssuer+'\n신청: '+newApply+'\n어음: \u20a9'+fmt(newAmount)+'원'
+    status:'input',
+    _slackText:slackMsg
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
   }).then(function(){
     renderDashboard(); renderList();
-    showToast('변경 완료 — 배서 단계로 이동합니다.','ok');
+    showToast('변경 완료 — 계좌정보를 입력해주세요.','ok');
     openModal(currentIdx);
   });
 }
@@ -776,7 +855,7 @@ function doEndorseComplete(){
     uid:iq.uid,
     endorseCompleted:true,
     endorseCompletedAt:new Date().toLocaleString('ko-KR'),
-    _slackText:'[배서 완료] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n→ 입금완료 버튼 대기중'
+    _slackText:'[배서 완료] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n→ 입금완료 버튼 대기중'
   };
   updateBillAPI(payload).then(function(){
     return loadAll();

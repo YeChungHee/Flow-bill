@@ -255,7 +255,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 
   <!-- 필터 -->
   <div class="filter-bar">
-    <input type="text" id="filterText" placeholder="업체명 / 발행사 검색" oninput="renderList()">
+    <input type="text" id="filterText" placeholder="수취사 / 발행사 검색" oninput="renderList()">
     <select id="filterStatus" onchange="renderList()">
       <option value="all">전체</option>
       <option value="wait">대기</option>
@@ -269,7 +269,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 
   <!-- 리스트 -->
   <div class="list-header">
-    <span>#</span><span>신청업체</span><span>발행사</span>
+    <span>#</span><span>수취사</span><span>발행사</span>
     <span style="text-align:right">어음금액</span><span style="text-align:center">만기일</span>
     <span style="text-align:center">상태</span><span style="text-align:center">접수일</span>
   </div>
@@ -360,6 +360,17 @@ function doPin(){
 function $(id){return document.getElementById(id)}
 function fmt(n){return n?Number(n).toLocaleString('ko-KR'):'0'}
 function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
+// 날짜 정규화: ISO/UTC → 한국시간 YYYY-MM-DD
+function fixDate(v){
+  if(!v) return '';
+  var s = String(v);
+  if(s.indexOf('T')!==-1){
+    var d = new Date(s);
+    d.setMinutes(d.getMinutes() + d.getTimezoneOffset() + 540);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return s.substring(0,10);
+}
 function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
 
 // 공휴일
@@ -467,7 +478,7 @@ function renderList(){
       +'<span class="company">'+(iq.applyName||'-')+'</span>'
       +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
       +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
-      +'<span class="due">'+(iq.billDue||'-')+'</span>'
+      +'<span class="due">'+(fixDate(iq.billDue)||'-')+'</span>'
       +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
       +'<span style="text-align:center;font-size:0.78rem;color:#999">'+ts+'</span>'
       +'</div>';
@@ -491,13 +502,13 @@ function baseInfoHTML(iq){
   return '<div class="info-grid">'
     +'<div class="info-item"><div class="lbl">접수번호</div><div class="val">'+(iq.uid||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">접수일시</div><div class="val">'+(iq.timestamp||'-')+'</div></div>'
-    +'<div class="info-item"><div class="lbl">신청업체</div><div class="val">'+(iq.applyName||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">수취사</div><div class="val">'+(iq.applyName||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.applyBiz||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">발행사</div><div class="val">'+(iq.issuerName||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사업자번호</div><div class="val">'+(iq.issuerBiz||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">어음금액</div><div class="val hl">\u20a9'+fmt(iq.billAmount)+'</div></div>'
-    +'<div class="info-item"><div class="lbl">만기일</div><div class="val">'+(iq.billDue||'-')+'</div></div>'
-    +'<div class="info-item"><div class="lbl">조회일</div><div class="val">'+(iq.startDate||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">만기일</div><div class="val">'+(fixDate(iq.billDue)||'-')+'</div></div>'
+    +'<div class="info-item"><div class="lbl">입금예정일</div><div class="val">'+(fixDate(iq.startDate)||'-')+'</div></div>'
     +'<div class="info-item"><div class="lbl">사용일수</div><div class="val hl">'+(iq.usageDays||'-')+'일</div></div>'
     +'</div>';
 }
@@ -742,16 +753,16 @@ function doAdminSave(){
     splitEndorsement: !!splitOn,
     splitCount: splitCount,
     splitAmounts: splitAmounts,
-    _slackText: '[할인 조건 전달] '+iq.issuerName+'\n신청: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
+    _slackText: '[할인 조건 전달] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
   };
 
   // 확인 팝업 내용 생성
   var extraSplit = (splitOn && splitCount > 1) ? (splitCount-1)*1500 : 0;
   var h = '';
-  h += '<div class="confirm-row"><span class="cl">신청업체</span><span class="cv">'+(iq.applyName||'-')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">수취사</span><span class="cv">'+(iq.applyName||'-')+'</span></div>';
   h += '<div class="confirm-row"><span class="cl">발행사</span><span class="cv">'+(iq.issuerName||'-')+'</span></div>';
   h += '<div class="confirm-row"><span class="cl">어음금액</span><span class="cv">\u20a9'+fmt(iq.billAmount)+'원</span></div>';
-  h += '<div class="confirm-row"><span class="cl">만기일</span><span class="cv">'+(iq.billDue||'-')+'</span></div>';
+  h += '<div class="confirm-row"><span class="cl">만기일</span><span class="cv">'+(fixDate(iq.billDue)||'-')+'</span></div>';
   h += '<div class="confirm-row"><span class="cl">사용일수</span><span class="cv">'+days+'일</span></div>';
   h += '<div class="confirm-row"><span class="cl">월할인율</span><span class="cv">'+rate+'%</span></div>';
   h += '<div class="confirm-row"><span class="cl">할인액 (수수료 포함)</span><span class="cv fee">\u20a9'+fmt(fee)+'원'+(extraSplit>0?' (분할 추가 '+fmt(extraSplit)+'원)':'')+'</span></div>';
@@ -805,7 +816,7 @@ function doDepositComplete(){
   var updateData = {
     status: 'done',
     depositDate: depositDate,
-    _slackText: '[입금 완료] '+iq.issuerName+'\n신청: '+iq.applyName+'\n입금액: \u20a9'+fmt(iq.net)+'원\n입금일: '+depositDate
+    _slackText: '[입금 완료] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n입금액: \u20a9'+fmt(iq.net)+'원\n입금일: '+depositDate
   };
 
   updateBillAPI(iq.uid, updateData).then(function(){
