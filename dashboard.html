@@ -37,6 +37,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .badge-select{background:#e3f2fd;color:#1565c0}
 .badge-input{background:#f3e5f5;color:#7b1fa2}
 .badge-endorse{background:#fff8e1;color:#f57f17}
+.badge-endorsed{background:#e0f2f1;color:#00695c}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.88rem}
@@ -452,10 +453,10 @@ var currentIdx = -1;
 
 // 상태 한글 매핑
 var STATUS_MAP = {
-  wait:'대기', select:'선택', input:'입력', endorse:'배서', done:'완료', cancel:'취소'
+  wait:'대기', select:'선택', input:'입력', endorse:'배서', endorsed:'배서완료', done:'입금완료', cancel:'취소'
 };
 function badgeClass(s){
-  return {wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';
+  return {wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';
 }
 
 // ===== 대시보드 렌더 =====
@@ -488,8 +489,8 @@ function renderList(){
 
 // ===== 상태 진행바 HTML =====
 function progressHTML(status){
-  var steps = ['wait','select','input','endorse','done'];
-  var labels = ['대기','선택','입력','배서','완료'];
+  var steps = ['wait','select','input','endorse','endorsed','done'];
+  var labels = ['대기','선택','입력','배서','배서완료','입금완료'];
   if(status==='cancel'){
     return '<div class="progress-bar"><div class="step cancel" style="flex:1">취소됨</div></div>';
   }
@@ -673,6 +674,14 @@ function openModal(idx){
     html += '<div class="btn-row">'
       +'<button class="btn btn-success" onclick="doEndorseComplete()">배서완료</button>'
       +'</div>';
+  }
+  else if(st === 'endorsed'){
+    html += discountHTML(iq);
+    html += splitHTML(iq);
+    html += accountInfoHTML(iq);
+    html += endorseHTML();
+    html += '<div style="text-align:center;padding:20px;color:#00695c;font-size:0.92rem;font-weight:600">✅ 배서가 완료되었습니다.<br>입금 처리를 기다려주세요.</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
   }
   else if(st === 'done'){
     html += discountHTML(iq);
@@ -990,6 +999,7 @@ function doEndorseComplete(){
   var payload = {
     action:'updateBill',
     uid:iq.uid,
+    status:'endorsed',
     endorseCompleted:true,
     endorseCompletedAt:new Date().toLocaleString('ko-KR'),
     _slackText:'[배서 완료] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n→ 입금완료 버튼 대기중'

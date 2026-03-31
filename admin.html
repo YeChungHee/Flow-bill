@@ -39,6 +39,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 .badge-select{background:#e3f2fd;color:#1565c0}
 .badge-input{background:#f3e5f5;color:#7b1fa2}
 .badge-endorse{background:#fff8e1;color:#f57f17}
+.badge-endorsed{background:#e0f2f1;color:#00695c}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.9rem}
@@ -448,8 +449,8 @@ function updateBillAPI(uid, updateData){
 
 var currentIdx = -1;
 
-var STATUS_MAP = {wait:'대기',select:'선택',input:'입력',endorse:'배서',done:'완료',cancel:'취소'};
-function badgeClass(s){return{wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';}
+var STATUS_MAP = {wait:'대기',select:'선택',input:'입력',endorse:'배서',endorsed:'배서완료',done:'입금완료',cancel:'취소'};
+function badgeClass(s){return{wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';}
 
 // ===== 대시보드 =====
 function renderDashboard(){
@@ -563,17 +564,18 @@ function openModal(idx){
     html += discountReadHTML(iq);
     html += splitReadHTML(iq);
     html += applicantInfoHTML(iq);
-    var ec = iq.endorseCompleted;
-    if(ec){
-      html += '<div style="text-align:center;padding:12px;color:#2e7d32;font-size:0.88rem;font-weight:700">신청자가 배서를 완료했습니다.</div>';
-      html += '<div class="btn-row">'
-        +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
-        +'<button class="btn btn-deposit" onclick="doDepositComplete()">입금완료</button>'
-        +'</div>';
-    } else {
-      html += '<div style="text-align:center;padding:12px;color:#f57f17;font-size:0.85rem">신청자가 배서 진행 중입니다.</div>';
-      html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
-    }
+    html += '<div style="text-align:center;padding:12px;color:#f57f17;font-size:0.85rem">신청자가 배서 진행 중입니다.</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
+  else if(st==='endorsed'){
+    html += discountReadHTML(iq);
+    html += splitReadHTML(iq);
+    html += applicantInfoHTML(iq);
+    html += '<div style="text-align:center;padding:12px;color:#00695c;font-size:0.88rem;font-weight:700">✅ 신청자가 배서를 완료했습니다.</div>';
+    html += '<div class="btn-row">'
+      +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
+      +'<button class="btn btn-deposit" onclick="doDepositComplete()">입금완료</button>'
+      +'</div>';
   }
   else if(st==='done'){
     html += discountReadHTML(iq);
@@ -816,7 +818,7 @@ function doConfirmSend(){
 
 function closePopup(){$('popupOverlay').classList.remove('show');}
 
-// ===== 입금완료 (배서→완료) =====
+// ===== 입금완료 (배서완료→입금완료) =====
 function doDepositComplete(){
   if(currentIdx<0) return;
   if(!confirm('입금완료 처리하시겠습니까?')) return;
