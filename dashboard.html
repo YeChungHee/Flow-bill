@@ -560,17 +560,37 @@ function accountInfoHTML(iq){
   if(fn){
     h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서)</div>';
     if(fData){
+      var isDriveLink = fData.indexOf('drive.google.com') >= 0;
       h += '<div class="attach-preview">';
-      var isImage = fType.indexOf('image')>=0;
-      if(isImage){
-        h += '<img src="'+fData+'" alt="'+fn+'" style="max-width:100%;border-radius:8px">';
+      if(isDriveLink){
+        // 구글 드라이브 링크 방식
+        var fileId = fData.match(/\/d\/([^\/]+)/);
+        var thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id='+fileId[1]+'&sz=w400' : '';
+        var isImage = fn.match(/\.(jpg|jpeg|png|gif)$/i);
+        if(isImage && thumbUrl){
+          h += '<img src="'+thumbUrl+'" alt="'+fn+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+        } else {
+          h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
+        }
+        h += '<div class="file-label">'+fn+'</div>';
+        h += '<div class="attach-btns">';
+        h += '<a href="'+fData+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">파일 보기</a>';
+        h += '<button onclick="copyShareLink(\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">링크 복사</button>';
+        h += '</div>';
       } else {
-        h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
+        // 기존 base64 방식 (하위호환)
+        var isImg = fType.indexOf('image')>=0;
+        if(isImg){
+          h += '<img src="'+fData+'" alt="'+fn+'" style="max-width:100%;border-radius:8px">';
+        } else {
+          h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
+        }
+        h += '<div class="file-label">'+fn+'</div>';
+        h += '<div class="attach-btns">';
+        h += '<a href="'+fData+'" download="'+fn+'" class="btn-preview-dl">다운로드</a>';
+        h += '</div>';
       }
-      h += '<div class="file-label">'+fn+'</div>';
-      h += '<div class="attach-btns">';
-      h += '<a href="'+fData+'" download="'+fn+'" class="btn-preview-dl">다운로드</a>';
-      h += '</div></div>';
+      h += '</div>';
     } else {
       h += '<div class="val">'+fn+'</div>';
     }
@@ -769,42 +789,58 @@ function onFileSelect(el){
   }
 }
 
-// ===== 파일 압축 + base64 변환 (Drive 미사용, 시트 직접 저장) =====
-function compressAndEncode(file){
+// ===== 파일명 생성 (날짜_수취사_발행사_어음액) =====
+function buildFileName(iq, originalName){
+  var ext = originalName.lastIndexOf('.') >= 0 ? originalName.substring(originalName.lastIndexOf('.')) : '';
+  var d = new Date();
+  var dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var apply = (iq.applyName||'수취사').replace(/[\/\\:*?"<>|]/g,'');
+  var issuer = (iq.issuerName||'발행사').replace(/[\/\\:*?"<>|]/g,'');
+  var amount = String(iq.billAmount||0).replace(/[^0-9]/g,'');
+  return dateStr+'_'+apply+'_'+issuer+'_'+amount+ext;
+}
+
+// ===== 파일을 base64로 변환 =====
+function fileToBase64(file){
+  return new Promise(function(resolve,reject){
+    var reader = new FileReader();
+    reader.onload = function(e){ resolve(e.target.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== Google Drive에 파일 업로드 =====
+function uploadFileToDrive(file, iq){
   return new Promise(function(resolve,reject){
     if(!file){ resolve(null); return; }
-    // PDF는 base64만 (압축 불가)
-    if(file.type==='application/pdf'){
-      var reader = new FileReader();
-      reader.onload = function(e){
-        var dataUrl = e.target.result;
-        resolve({ fileName:file.name, mimeType:file.type, dataUrl:dataUrl });
+    var driveFileName = buildFileName(iq, file.name);
+    fileToBase64(file).then(function(dataUrl){
+      var payload = {
+        action: 'uploadFile',
+        fileName: driveFileName,
+        mimeType: file.type,
+        fileData: dataUrl
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-      return;
-    }
-    // 이미지: Canvas로 리사이즈 후 압축
-    var img = new Image();
-    img.onload = function(){
-      var maxW = 800, maxH = 800;
-      var w = img.width, h = img.height;
-      if(w>maxW||h>maxH){
-        var ratio = Math.min(maxW/w, maxH/h);
-        w = Math.round(w*ratio);
-        h = Math.round(h*ratio);
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'text/plain'},
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+    }).then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res.success){
+        resolve({
+          fileName: driveFileName,
+          fileUrl: res.fileUrl,
+          fileId: res.fileId,
+          thumbnailUrl: res.thumbnailUrl || ''
+        });
+      } else {
+        reject(res.error || 'Upload failed');
       }
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      resolve({ fileName:file.name, mimeType:'image/jpeg', dataUrl:dataUrl });
-    };
-    img.onerror = reject;
-    var r = new FileReader();
-    r.onload = function(e){ img.src = e.target.result; };
-    r.readAsDataURL(file);
+    }).catch(reject);
   });
 }
 
@@ -853,10 +889,10 @@ function doAccountConfirm(){
       bankName:d.bankName,
       accountNo:d.accountNo,
       attachmentName: fileResult ? fileResult.fileName : (iq.attachmentName||''),
-      attachmentData: fileResult ? fileResult.dataUrl : (iq.attachmentData||''),
-      attachmentType: fileResult ? fileResult.mimeType : (iq.attachmentType||''),
+      attachmentData: fileResult ? fileResult.fileUrl : (iq.attachmentData||''),
+      attachmentType: fileResult ? 'drive_link' : (iq.attachmentType||''),
       status:'endorse',
-      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo+(fileResult?' (첨부파일 있음)':'')
+      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo+(fileResult?' (첨부파일: '+fileResult.fileUrl+')':'')
     };
     return updateBillAPI(payload).then(function(){
       selectedFile = null;
@@ -871,11 +907,11 @@ function doAccountConfirm(){
   }
 
   if(d.file){
-    btn.textContent = '파일 변환 중...';
-    compressAndEncode(d.file).then(function(result){
-      doSaveAccount(result);
+    btn.textContent = '파일 업로드 중...';
+    uploadFileToDrive(d.file, iq).then(function(result){
+      return doSaveAccount(result);
     }).catch(function(err){
-      console.warn('파일 변환 실패, 계좌만 저장:', err);
+      console.warn('파일 업로드 실패, 계좌만 저장:', err);
       doSaveAccount(null);
     });
   } else {

@@ -879,6 +879,21 @@ function splitReadHTML(iq){
   return h;
 }
 
+// ===== 공유 링크 복사 =====
+function copyShareLink(url){
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){
+      showToast('링크가 복사되었습니다. 카톡 등에 붙여넣기 하세요.','ok');
+    });
+  } else {
+    var t=document.createElement('textarea');
+    t.value=url;document.body.appendChild(t);
+    t.select();document.execCommand('copy');
+    document.body.removeChild(t);
+    showToast('링크가 복사되었습니다.','ok');
+  }
+}
+
 // ===== 신청자 입력정보 읽기 =====
 function applicantInfoHTML(iq){
   var bk=iq.bankName||'';var ac=iq.accountNo||'';var fn=iq.attachmentName||'';
@@ -890,16 +905,36 @@ function applicantInfoHTML(iq){
   if(fn){
     h+='<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>';
     if(fData){
-      var isImg=fType.indexOf('image')>=0;
+      var isDriveLink=fData.indexOf('drive.google.com')>=0;
       h+='<div style="margin-top:8px;background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px">';
-      if(isImg){
-        h+='<img src="'+fData+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+      if(isDriveLink){
+        // 구글 드라이브 링크 방식
+        var fileId=fData.match(/\/d\/([^\/]+)/);
+        var thumbUrl=fileId?'https://drive.google.com/thumbnail?id='+fileId[1]+'&sz=w400':'';
+        var isImage=fn.match(/\.(jpg|jpeg|png|gif)$/i);
+        if(isImage&&thumbUrl){
+          h+='<img src="'+thumbUrl+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+        } else {
+          h+='<div style="text-align:center;font-size:2.5rem;padding:12px 0">📄</div>';
+        }
+        h+='<div style="font-size:0.8rem;color:#666;margin-bottom:8px;word-break:break-all">'+fn+'</div>';
+        h+='<div style="display:flex;gap:8px">';
+        h+='<a href="'+fData+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">파일 보기</a>';
+        h+='<button onclick="copyShareLink(\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">링크 복사</button>';
+        h+='</div>';
       } else {
-        h+='<div style="text-align:center;font-size:2.5rem;padding:12px 0">📄</div>';
+        // 기존 base64 방식 (하위호환)
+        var isImg=fType.indexOf('image')>=0;
+        if(isImg){
+          h+='<img src="'+fData+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+        } else {
+          h+='<div style="text-align:center;font-size:2.5rem;padding:12px 0">📄</div>';
+        }
+        h+='<div style="display:flex;gap:8px;margin-top:8px">';
+        h+='<a href="'+fData+'" download="'+fn+'" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">다운로드</a>';
+        h+='</div>';
       }
-      h+='<div style="display:flex;gap:8px;margin-top:8px">';
-      h+='<a href="'+fData+'" download="'+fn+'" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">다운로드</a>';
-      h+='</div></div>';
+      h+='</div>';
     }
   }
   h+='</div>';
