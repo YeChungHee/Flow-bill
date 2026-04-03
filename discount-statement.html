@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>할인내역서</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Noto Sans KR',Arial,sans-serif;
+  font-size:10pt; color:#222;
+  background:#e8e8e8;
+  display:flex; flex-direction:column; align-items:center;
+  padding:0;
+}
+
+/* ── 로딩 / 에러 ── */
+.loading { text-align:center; padding:80px 20px; color:#888; font-size:0.95rem; }
+.loading .spinner { display:inline-block; width:28px; height:28px; border:3px solid #ddd; border-top-color:#1565c0; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:12px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.error-msg { text-align:center; padding:80px 20px; color:#c62828; font-size:0.95rem; }
+
+/* ── 상단 툴바 ── */
+.toolbar {
+  width:100%; max-width:780px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px;
+  background:#fff;
+  border-bottom:1px solid #e0e0e0;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+.btn-close {
+  display:flex; align-items:center; gap:6px;
+  background:none; border:1px solid #ddd; border-radius:6px;
+  padding:6px 14px; font-size:9pt; color:#555;
+  cursor:pointer; font-family:'Noto Sans KR',sans-serif;
+}
+.btn-close:hover { background:#f5f5f5; }
+.toolbar-title { font-size:9.5pt; color:#555; font-weight:500; }
+.btn-download {
+  display:flex; align-items:center; gap:6px;
+  background:#1a56db; color:#fff; border:none; border-radius:6px;
+  padding:7px 16px; font-size:9pt; font-weight:700;
+  cursor:pointer; font-family:'Noto Sans KR',sans-serif;
+}
+.btn-download:hover { background:#1744b8; }
+
+/* ── 페이지 ── */
+.page {
+  background:white; width:760px;
+  padding:38px 48px 36px;
+  margin:20px 0 30px;
+  box-shadow:0 2px 20px rgba(0,0,0,0.13);
+}
+
+/* ── 헤더 (커브 로고) ── */
+.hdr { position:relative; padding:0 0 8pt 0; margin-bottom:22pt; }
+.hdr-curve { position:relative; display:inline-block; padding-bottom:6pt; }
+.hdr-curve::after {
+  content:''; position:absolute; bottom:0; left:-10px; right:-60px; height:2.5pt;
+  background:linear-gradient(90deg,#8B7355 0%,#C4A97D 60%,transparent 100%);
+  border-radius:0 0 80px 0;
+}
+.hdr-logo { font-size:15pt; font-weight:700; color:#8B7355; font-family:Georgia,'Times New Roman',serif; font-style:italic; }
+.hdr-logo .fp-cursive { font-size:22pt; font-style:italic; letter-spacing:-1pt; }
+.hdr-brand { font-size:15pt; font-weight:700; color:#8B7355; font-family:Georgia,'Times New Roman',serif; font-style:normal; letter-spacing:2pt; margin-left:8pt; }
+
+/* ── 감사 문구 ── */
+.thanks { text-align:center; margin-bottom:12pt; }
+.thanks p { font-size:8pt; color:#888; margin-top:6pt; line-height:1.5; }
+
+/* ── 섹션 제목 ── */
+.sec { font-size:11pt; font-weight:700; color:#5C4A2A; border-bottom:1.5pt solid #8B7355; padding-bottom:4pt; margin-top:18pt; margin-bottom:2pt; }
+
+/* ── 테이블 ── */
+table { width:100%; border-collapse:collapse; margin-top:0; }
+td { border:0.4pt solid #ddd; padding:6pt 8pt; font-size:9pt; }
+.lbl { background:#F5F3F0; color:#5C4A2A; font-weight:700; text-align:center; white-space:nowrap; }
+.val { text-align:center; }
+.amt { text-align:center; font-weight:700; }
+.biz-no { display:inline-block; white-space:nowrap; }
+
+/* ── 지급금액 ── */
+.pay-hdr td { background:#F0EBE3; color:#5C4A2A; font-weight:700; text-align:center; font-size:10pt; padding:6pt; letter-spacing:8pt; }
+.pay-row td { padding:9pt 12pt; font-size:12pt; border:0.4pt solid #ddd; }
+.pay-kor { font-weight:700; }
+.pay-slash { margin:0 12pt; color:#bbb; }
+.pay-num { float:right; font-weight:700; }
+
+/* ── 주석 ── */
+.note { font-size:7.5pt; color:#999; margin-top:6pt; line-height:1.5; }
+
+/* ── 서명란 ── */
+.sig { text-align:center; margin-top:16pt; line-height:1.5; font-size:9.5pt; }
+.sig-name-wrap { display:flex; align-items:center; justify-content:center; gap:12pt; margin-top:4pt; }
+.sig-name { font-size:15pt; font-weight:700; }
+.sig-omit { font-size:9pt; color:#999; }
+
+/* ── 푸터 ── */
+.footer { border-top:0.5pt solid #ccc; margin-top:18pt; padding-top:6pt; display:flex; justify-content:space-between; font-size:7.5pt; color:#aaa; }
+.footer-l { font-weight:700; color:#8B7355; }
+
+/* ── 인쇄 시 ── */
+@media print {
+  .toolbar { display:none !important; }
+  body { background:white; padding:0; }
+  .page { box-shadow:none; margin:0; padding:20mm 22mm 18mm; width:100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- 로딩 화면 -->
+<div id="loadingArea" class="loading">
+  <div class="spinner"></div><br>할인내역서를 불러오는 중입니다...
+</div>
+
+<!-- 에러 화면 (숨김) -->
+<div id="errorArea" class="error-msg" style="display:none"></div>
+
+<!-- 상단 툴바 (숨김 → 데이터 로드 후 표시) -->
+<div class="toolbar" id="toolbar" style="display:none">
+  <button class="btn-close" onclick="window.close()">✕&nbsp; 닫기</button>
+  <span class="toolbar-title" id="toolbarTitle">할인내역서</span>
+  <button class="btn-download" onclick="downloadPDF()">⬇ 다운로드</button>
+</div>
+
+<!-- 문서 본문 (숨김 → 데이터 로드 후 표시) -->
+<div class="page" id="docPage" style="display:none">
+
+  <!-- 헤더 -->
+  <div class="hdr">
+    <div class="hdr-curve">
+      <span class="hdr-logo"><span class="fp-cursive">fp</span></span>
+      <span class="hdr-brand">FLOW PARTNERS</span>
+    </div>
+  </div>
+
+  <!-- 감사 문구 -->
+  <div class="thanks">
+    <p>
+      플로우파트너스를 이용해 주셔서 감사드립니다.<br>
+      가장 합리적이고, 편리한 서비스로 기업 금융의 원활한 흐름을 도와드립니다.<br>
+      기업과 함께하는 금융파트너, 플로우파트너스
+    </p>
+  </div>
+
+  <hr style="border:none; border-top:0.5pt solid #ccc; margin:10pt 0 4pt;">
+
+  <!-- 할인내역 -->
+  <div class="sec">할인내역</div>
+  <table>
+    <colgroup>
+      <col style="width:12%"><col style="width:28%"><col style="width:24%"><col style="width:18%"><col style="width:18%">
+    </colgroup>
+    <tr>
+      <td class="lbl">발행사</td>
+      <td class="val" id="dIssuer"></td>
+      <td class="lbl">할인율</td>
+      <td class="lbl">만기일</td>
+      <td class="lbl">사용일수</td>
+    </tr>
+    <tr>
+      <td class="lbl">입금일</td>
+      <td class="val" id="dDepositDate"></td>
+      <td class="val" id="dRate"></td>
+      <td class="val" id="dBillDue"></td>
+      <td class="val" id="dUsageDays"></td>
+    </tr>
+    <tr>
+      <td class="lbl">액면금액</td>
+      <td class="amt" id="dBillAmount"></td>
+      <td class="lbl">수수료</td>
+      <td class="amt" colspan="2" id="dFee"></td>
+    </tr>
+  </table>
+
+  <!-- 지급금액 -->
+  <table>
+    <tr class="pay-hdr"><td colspan="5">지 급 금 액</td></tr>
+    <tr class="pay-row">
+      <td colspan="5">
+        <span class="pay-kor" id="dNetKor"></span>
+        <span class="pay-slash">/</span>
+        <span class="pay-num" id="dNetNum"></span>
+      </td>
+    </tr>
+  </table>
+
+  <!-- 주석 -->
+  <div class="note">
+    * 상기 수수료는 일수별 할인수수료 금액 및 이체, 배서 등의 금융 비용 포함<br>
+    * 사용일수는 지급금 지급일을 포함하며, 어음의 만기일이 비영업일일 경우 익영업일을 기준으로 산정
+  </div>
+
+  <!-- 할인사 정보 -->
+  <div class="sec">할인사 정보</div>
+  <table>
+    <tr>
+      <td class="lbl">상호</td><td class="val">㈜플로우파트너스대부</td>
+      <td class="lbl">대표자</td><td class="val">신인근</td>
+    </tr>
+    <tr><td class="lbl">사업자등록번호</td><td class="val" colspan="3">202-81-66441</td></tr>
+    <tr><td class="lbl">대부업등록번호</td><td class="val" colspan="3">2019-서울영등포-2016(대부업)</td></tr>
+    <tr><td class="lbl">사업장 정보</td><td class="val" colspan="3">서울특별시 영등포구 여의서로43(한서리버파크) 913호 &nbsp;/&nbsp; 02-785-7080</td></tr>
+  </table>
+
+  <!-- 고객사 정보 -->
+  <div class="sec">고객사 정보</div>
+  <table>
+    <tr>
+      <td class="lbl">기업명</td><td class="val" id="dApplyName"></td>
+      <td class="lbl">사업자등록번호</td><td class="val" id="dApplyBiz"></td>
+    </tr>
+    <tr>
+      <td class="lbl">계좌정보</td>
+      <td class="val" colspan="3" id="dAccount"></td>
+    </tr>
+  </table>
+
+  <!-- 서명란 -->
+  <div class="sig">
+    <div>상기 금액을 정히 확인함</div>
+    <div id="dSigDate"></div>
+    <div class="sig-name-wrap">
+      <span class="sig-name">㈜플로우파트너스대부</span>
+      <span class="sig-omit">(직인 생략)</span>
+    </div>
+  </div>
+
+  <!-- 푸터 -->
+  <div class="footer">
+    <span class="footer-l">FLOW PARTNERS</span>
+    <span>전자어음 할인 / 기업금융 지원 관련 문의 : 02-785-7080</span>
+  </div>
+
+</div>
+
+<script>
+// ===== GAS API 엔드포인트 =====
+var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
+
+// ===== URL에서 uid 파라미터 추출 =====
+function getParam(key) {
+  var params = new URLSearchParams(window.location.search);
+  return params.get(key) || '';
+}
+
+// ===== 숫자 → 한글 금액 변환 =====
+function numToKorean(n) {
+  if (!n || n === 0) return '영';
+  n = Math.floor(Number(n));
+  var digits = ['','일','이','삼','사','오','육','칠','팔','구'];
+  var units = ['','십','백','천'];
+  var bigs = ['','만','억','조'];
+  var str = String(n);
+  var len = str.length;
+  var result = '';
+  var groupCount = Math.ceil(len / 4);
+
+  for (var g = 0; g < groupCount; g++) {
+    var groupStr = '';
+    var start = len - (g + 1) * 4;
+    var end = len - g * 4;
+    if (start < 0) start = 0;
+    var part = str.substring(start, end);
+
+    for (var i = 0; i < part.length; i++) {
+      var d = parseInt(part[i]);
+      var unitIdx = part.length - 1 - i;
+      if (d === 0) continue;
+      if (d === 1 && unitIdx > 0) {
+        groupStr += units[unitIdx];
+      } else {
+        groupStr += digits[d] + units[unitIdx];
+      }
+    }
+    if (groupStr) {
+      result = groupStr + bigs[g] + result;
+    }
+  }
+  return result;
+}
+
+// ===== 숫자 포맷 (₩1,234,567) =====
+function formatNum(n) {
+  return '₩' + Number(n).toLocaleString('ko-KR');
+}
+
+// ===== 날짜 포맷 (2026년 4월 1일) =====
+function formatDateKor(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+}
+
+// ===== 날짜 포맷 (YYYY-MM-DD) =====
+function formatDateISO(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var dd = String(d.getDate()).padStart(2,'0');
+  return d.getFullYear() + '-' + mm + '-' + dd;
+}
+
+// ===== 데이터 바인딩 =====
+function renderDoc(bill) {
+  var issuerName = bill.issuerName || '';
+  var issuerBiz = bill.issuerBiz || '';
+  var applyName = bill.applyName || '';
+  var applyBiz = bill.applyBiz || '';
+  var billAmount = Number(bill.billAmount) || 0;
+  var billDue = bill.billDue || '';
+  var depositDate = bill.depositDate || bill.startDate || '';
+  var usageDays = bill.usageDays || '';
+  var rate = Number(bill.rate) || 0;
+  var fee = Number(bill.fee) || 0;
+  var net = Number(bill.net) || 0;
+  var bankName = bill.bankName || '';
+  var accountNo = bill.accountNo || '';
+
+  var annualRate = Math.round(rate * 12 * 10) / 10;
+
+  // 툴바 타이틀
+  var titleDate = formatDateISO(depositDate);
+  document.getElementById('toolbarTitle').textContent = '할인내역서_' + titleDate + '_' + issuerName;
+  document.title = '할인내역서_' + titleDate + '_' + issuerName;
+
+  // 발행사
+  document.getElementById('dIssuer').innerHTML = issuerName + ' <span class="biz-no">' + issuerBiz + '</span>';
+
+  // 입금일 / 할인율 / 만기일 / 사용일수
+  document.getElementById('dDepositDate').textContent = formatDateISO(depositDate);
+  document.getElementById('dRate').textContent = '연 ' + annualRate + '% (월 ' + rate + '%)';
+  document.getElementById('dBillDue').textContent = formatDateISO(billDue);
+  document.getElementById('dUsageDays').textContent = usageDays + '일';
+
+  // 액면금액 / 수수료
+  document.getElementById('dBillAmount').textContent = formatNum(billAmount);
+  document.getElementById('dFee').textContent = formatNum(fee);
+
+  // 지급금액
+  document.getElementById('dNetKor').innerHTML = '금&nbsp;&nbsp;' + numToKorean(net) + '원정';
+  document.getElementById('dNetNum').textContent = formatNum(net);
+
+  // 고객사 정보
+  document.getElementById('dApplyName').textContent = applyName;
+  document.getElementById('dApplyBiz').textContent = applyBiz;
+  document.getElementById('dAccount').innerHTML = bankName + '&nbsp;&nbsp;' + accountNo + '&nbsp;&nbsp;( 예금주 : ' + applyName + ' )';
+
+  // 서명란 날짜
+  document.getElementById('dSigDate').textContent = formatDateKor(depositDate);
+
+  // 표시
+  document.getElementById('loadingArea').style.display = 'none';
+  document.getElementById('toolbar').style.display = 'flex';
+  document.getElementById('docPage').style.display = 'block';
+}
+
+// ===== API 호출 =====
+function loadData() {
+  var uid = getParam('uid');
+  if (!uid) {
+    showError('할인내역서를 표시할 수 없습니다.<br>uid 파라미터가 필요합니다.');
+    return;
+  }
+
+  var url = API_URL + '?action=getBill&uid=' + encodeURIComponent(uid);
+
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(json) {
+      if (json.success && json.data) {
+        if (json.data.status !== 'done') {
+          showError('입금완료 상태가 아닙니다.<br>입금완료 후 할인내역서를 확인할 수 있습니다.');
+          return;
+        }
+        renderDoc(json.data);
+      } else {
+        showError('데이터를 찾을 수 없습니다.<br>(uid: ' + uid + ')');
+      }
+    })
+    .catch(function(err) {
+      showError('데이터를 불러오는 중 오류가 발생했습니다.<br>' + err.message);
+    });
+}
+
+function showError(msg) {
+  document.getElementById('loadingArea').style.display = 'none';
+  var el = document.getElementById('errorArea');
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+
+// ===== 다운로드 (인쇄) =====
+function downloadPDF() {
+  window.addEventListener('afterprint', function handler() {
+    window.removeEventListener('afterprint', handler);
+    setTimeout(function(){ window.close(); }, 300);
+  });
+  window.print();
+}
+
+// ===== 페이지 로드 시 실행 =====
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+</body>
+</html>

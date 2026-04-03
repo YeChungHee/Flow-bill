@@ -706,7 +706,10 @@ function openModal(idx){
     html += accountInfoHTML(iq);
     html += endorseHTML();
     html += depositHTML(iq);
-    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+    html += '<div class="btn-row">'
+      +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
+      +'<button class="btn btn-primary" onclick="openDiscountStatement(\''+iq.uid+'\')">📄 할인내역서 보기</button>'
+      +'</div>';
   }
   else if(st === 'cancel'){
     html += '<div style="text-align:center;padding:20px;color:#c62828;font-size:0.92rem;font-weight:700">이 문의는 취소되었습니다.</div>';
@@ -1057,6 +1060,12 @@ function showToast(msg,type){
   el.className='msg-toast msg-'+(type||'ok');
   el.style.display='block';
   setTimeout(function(){el.style.display='none'},3000);
+}
+
+// ===== 할인내역서 보기 =====
+function openDiscountStatement(uid){
+  var baseUrl = window.location.href.replace(/[^\/]*$/, '');
+  window.open(baseUrl + 'discount-statement.html?uid=' + encodeURIComponent(uid), '_blank');
 }
 
 // ===== ESC =====
