@@ -80,7 +80,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
   .card{padding:14px;border-radius:10px}
   .card h2{font-size:0.85rem}
   .field input,.field select{padding:9px 10px;font-size:0.88rem}
-  .row2{grid-template-columns:1fr;gap:8px}
+  .row2{grid-template-columns:1fr 1fr;gap:8px}
   .btn{padding:13px;font-size:0.92rem}
   .nav-tab{padding:9px 0;font-size:0.8rem}
   .preview .lbl{font-size:0.78rem}
@@ -102,13 +102,15 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
   <!-- 수취사 정보 -->
   <div class="card">
     <h2>수취사 정보</h2>
-    <div class="field">
-      <label>사업자번호</label>
-      <input type="text" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkAutoFill()">
-    </div>
-    <div class="field">
-      <label>수취사</label>
-      <input type="text" id="applyName" placeholder="수취사명 입력">
+    <div class="row2">
+      <div class="field">
+        <label>사업자번호</label>
+        <input type="text" id="applyBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkAutoFill()">
+      </div>
+      <div class="field">
+        <label>수취사</label>
+        <input type="text" id="applyName" placeholder="수취사명 입력">
+      </div>
     </div>
     <div id="autoFillMsg" style="display:none;font-size:0.78rem;color:#2e7d32;padding:4px 0;font-weight:600"></div>
   </div>
@@ -116,22 +118,26 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 10px}
   <!-- 어음 정보 -->
   <div class="card">
     <h2>어음 정보</h2>
-    <div class="field">
-      <label>발행사 사업자번호</label>
-      <input type="text" id="issuerBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkIssuerAutoFill()">
-    </div>
-    <div class="field">
-      <label>발행사명</label>
-      <input type="text" id="issuerName" placeholder="발행사명 입력">
+    <div class="row2">
+      <div class="field">
+        <label>발행사 사업자번호</label>
+        <input type="text" id="issuerBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this);checkIssuerAutoFill()">
+      </div>
+      <div class="field">
+        <label>발행사명</label>
+        <input type="text" id="issuerName" placeholder="발행사명 입력">
+      </div>
     </div>
     <div id="issuerList" style="display:none"></div>
-    <div class="field">
-      <label>어음금액 (원)</label>
-      <input type="text" id="billAmount" placeholder="금액 입력" inputmode="numeric" oninput="formatAmount(this)">
-    </div>
-    <div class="field">
-      <label>만기일</label>
-      <input type="date" id="billDue">
+    <div class="row2">
+      <div class="field">
+        <label>어음금액 (원)</label>
+        <input type="text" id="billAmount" placeholder="금액 입력" inputmode="numeric" oninput="formatAmount(this)">
+      </div>
+      <div class="field">
+        <label>만기일</label>
+        <input type="date" id="billDue">
+      </div>
     </div>
     <div class="row2">
       <div class="field">
