@@ -6,35 +6,53 @@
 <title>전자어음 할인 관리자</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f2f5;color:#333;line-height:1.5}
-.wrap{max-width:960px;margin:0 auto;padding:16px}
-h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
-.subtitle{text-align:center;color:#888;font-size:0.78rem;margin-bottom:6px}
-.bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f2f5;color:#333;line-height:1.5;font-size:12px}
+.wrap{max-width:960px;margin:0 auto;padding:12px}
+h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
+.subtitle{text-align:center;color:#888;font-size:0.68rem;margin-bottom:4px}
+.bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:14px}
 
 /* 대시보드 카드 */
-.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
-.dash-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
-.dash-card .num{font-size:1.6rem;font-weight:800;line-height:1.2}
-.dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
+.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.dash-card{background:#fff;border-radius:10px;padding:10px 6px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.dash-card .num{font-size:1.35rem;font-weight:800;line-height:1.2}
+.dash-card .label{font-size:0.62rem;color:#888;margin-top:2px}
 .c-total{color:#1565c0}.c-wait{color:#e65100}.c-prog{color:#7b1fa2}.c-done{color:#2e7d32}.c-amount{color:#6a1b9a}
 
 /* 필터 바 */
-.filter-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.filter-bar input,.filter-bar select{padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:0.85rem;outline:none}
+.filter-bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{padding:7px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.78rem;outline:none}
 .filter-bar input:focus,.filter-bar select:focus{border-color:#1565c0}
-.filter-bar input[type="text"]{flex:1;min-width:160px}
+.filter-bar input[type="text"]{flex:1;min-width:120px}
+.filter-bar input[type="date"]{width:130px}
+.filter-bar .filter-row{display:flex;gap:6px}
+.filter-bar .date-group{display:flex;align-items:center;gap:4px}
+.filter-bar .date-sep{font-size:0.7rem;color:#bbb}
 
-/* 리스트 */
-.list-header{display:grid;grid-template-columns:50px 1fr 1fr 120px 90px 80px 80px;gap:8px;padding:10px 14px;font-size:0.75rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
-.list-item{display:grid;grid-template-columns:50px 1fr 1fr 120px 90px 80px 80px;gap:8px;align-items:center;padding:12px 14px;background:#fff;border-radius:10px;margin-bottom:6px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.85rem;cursor:pointer;transition:all 0.15s}
+/* 리스트 — 데스크톱 8컬럼 */
+.list-header{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
+.list-item{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
 .list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
-.list-item .no{color:#999;font-size:0.78rem}
+.list-item .no{color:#999;font-size:0.7rem}
 .list-item .company{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-item .issuer{color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.82rem}
-.list-item .due{font-size:0.8rem;color:#666;text-align:center}
-.badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700}
+.list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.76rem}
+.list-item .rate{font-size:0.76rem;color:#e65100;text-align:center;font-weight:700}
+.list-item .date{font-size:0.72rem;color:#666;text-align:center}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.64rem;font-weight:700}
+
+/* 모바일 카드 뷰 */
+.list-mobile{display:none}
+.m-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06);cursor:pointer;transition:all .15s}
+.m-card:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12)}
+.m-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.m-companies{font-weight:700;font-size:0.82rem;color:#333;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.m-companies .arr{color:#bbb;margin:0 4px;font-weight:400}
+.m-row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-amount{font-weight:800;font-size:0.88rem;color:#1565c0}
+.m-rate{font-size:0.74rem;color:#e65100;font-weight:700}
+.m-dates{display:flex;gap:10px;margin-top:6px;font-size:0.68rem;color:#999}
+.m-dates span strong{color:#555;font-weight:600}
 .badge-wait{background:#fff3e0;color:#e65100}
 .badge-select{background:#e3f2fd;color:#1565c0}
 .badge-input{background:#f3e5f5;color:#7b1fa2}
@@ -42,7 +60,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 .badge-endorsed{background:#e0f2f1;color:#00695c}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
-.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.9rem}
+.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
 
 /* 모달 */
 .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto}
@@ -158,7 +176,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 .btn-send:hover{transform:translateY(-1px)}
 .btn-send:disabled{opacity:0.6;transform:none;cursor:not-allowed}
 
-.footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
+.footer{text-align:center;color:#aaa;font-size:0.65rem;padding:20px 0 10px}
 
 /* PIN 인증 화면 */
 .pin-screen{display:flex;align-items:center;justify-content:center;min-height:70vh}
@@ -180,24 +198,25 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
   .dash-card .num{font-size:1.3rem}
 }
 
-/* 모바일 (700px 이하) */
-@media(max-width:700px){
-  .wrap{padding:10px}
-  h1{font-size:1.15rem;padding:14px 0 4px}
-  .subtitle{font-size:0.72rem}
+/* 모바일 (640px 이하) */
+@media(max-width:640px){
+  .wrap{padding:8px}
+  h1{font-size:1.05rem;padding:10px 0 3px}
+  .subtitle{font-size:0.64rem}
   .dash{grid-template-columns:repeat(3,1fr);gap:6px}
-  .dash-card{padding:10px 6px}
-  .dash-card .num{font-size:1.2rem}
-  .dash-card .label{font-size:0.65rem}
-  .filter-bar{gap:6px}
-  .filter-bar input,.filter-bar select{padding:8px 10px;font-size:0.82rem}
+  .dash-card{padding:8px 4px;border-radius:8px}
+  .dash-card .num{font-size:1.1rem}
+  .dash-card .label{font-size:0.58rem}
+  .dash-card:nth-child(5){grid-column:1/-1}
+  .filter-bar{flex-direction:column;gap:6px}
+  .filter-bar input[type="text"]{width:100%;min-width:auto}
+  .filter-bar .filter-row{width:100%}
+  .filter-bar .filter-row select{flex:1}
+  .filter-bar .date-group{width:100%;flex-wrap:wrap}
+  .filter-bar input[type="date"]{flex:1;min-width:0}
   .list-header{display:none}
-  .list-item{display:flex;flex-wrap:wrap;gap:4px 12px;padding:14px;font-size:0.85rem}
-  .list-item .no{display:none}
-  .list-item .company{flex:1;min-width:50%;font-size:0.9rem}
-  .list-item .issuer{flex:1;min-width:40%;font-size:0.82rem}
-  .list-item .amount{font-size:0.9rem;text-align:left}
-  .list-item .due{font-size:0.78rem;color:#888;text-align:left}
+  .list-desktop{display:none}
+  .list-mobile{display:block}
   .modal{margin:16px auto;border-radius:12px}
   .modal-body{padding:14px}
   .info-grid{grid-template-columns:1fr 1fr;gap:8px}
@@ -257,24 +276,42 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
   <!-- 필터 -->
   <div class="filter-bar">
     <input type="text" id="filterText" placeholder="수취사 / 발행사 검색" oninput="renderList()">
-    <select id="filterStatus" onchange="renderList()">
-      <option value="all">전체</option>
-      <option value="wait">대기</option>
-      <option value="select">선택</option>
-      <option value="input">입력</option>
-      <option value="endorse">배서</option>
-      <option value="done">완료</option>
-      <option value="cancel">취소</option>
-    </select>
+    <div class="filter-row">
+      <select id="filterStatus" onchange="renderList()">
+        <option value="all">전체</option>
+        <option value="wait">대기</option>
+        <option value="select">선택</option>
+        <option value="input">입력</option>
+        <option value="endorse">배서</option>
+        <option value="done">완료</option>
+        <option value="cancel">취소</option>
+      </select>
+      <select id="filterDateType" onchange="toggleDateRange();renderList()">
+        <option value="none">날짜검색</option>
+        <option value="receipt">접수일</option>
+        <option value="due">만기일</option>
+      </select>
+    </div>
+    <div class="date-group" id="dateRange" style="display:none">
+      <input type="date" id="dateFrom" onchange="renderList()">
+      <span class="date-sep">~</span>
+      <input type="date" id="dateTo" onchange="renderList()">
+    </div>
   </div>
 
-  <!-- 리스트 -->
+  <!-- 리스트 헤더 (데스크톱) -->
   <div class="list-header">
-    <span>#</span><span>수취사</span><span>발행사</span>
-    <span style="text-align:right">어음금액</span><span style="text-align:center">만기일</span>
-    <span style="text-align:center">상태</span><span style="text-align:center">접수일</span>
+    <span>#</span>
+    <span style="text-align:center">상태</span>
+    <span style="text-align:center">접수일</span>
+    <span>수취사</span>
+    <span>발행사</span>
+    <span style="text-align:right">어음금액</span>
+    <span style="text-align:center">할인율</span>
+    <span style="text-align:center">만기일</span>
   </div>
-  <div id="listBody"></div>
+  <div id="listBody" class="list-desktop"></div>
+  <div id="listMobile" class="list-mobile"></div>
 
   <div class="footer">276홀딩스 · 전자어음 할인 관리 시스템</div>
   </div><!-- /adminScreen -->
@@ -468,31 +505,81 @@ function renderDashboard(){
   $('dAmount').textContent=total>=100000000?(total/100000000).toFixed(1)+'억':total>=10000?(total/10000).toFixed(0)+'만':fmt(total);
 }
 
+// ===== 날짜 필터 토글 =====
+function toggleDateRange(){
+  var dt=$('filterDateType').value;
+  $('dateRange').style.display=(dt==='none')?'none':'flex';
+}
+function shortDate(d){if(!d)return'-';var p=d.split('-');return p.length===3?(p[1]+'.'+p[2]):d;}
+
 // ===== 리스트 =====
 function renderList(){
   var filter=$('filterText').value.trim().toLowerCase();
   var status=$('filterStatus').value;
+  var dateType=$('filterDateType')?$('filterDateType').value:'none';
+  var dateFrom=$('dateFrom')?$('dateFrom').value:'';
+  var dateTo=$('dateTo')?$('dateTo').value:'';
+
   var filtered=list.map(function(x,i){x._idx=i;return x}).filter(function(x){
     if(status!=='all'&&x.status!==status) return false;
     if(filter){var h=((x.applyName||'')+(x.issuerName||'')+(x.uid||'')).toLowerCase();if(h.indexOf(filter)===-1)return false;}
+    if(dateType!=='none'){
+      var target='';
+      if(dateType==='receipt'){target=x.timestamp?x.timestamp.split(' ')[0]:'';}
+      else if(dateType==='due'){target=fixDate(x.billDue);}
+      if(dateFrom&&target<dateFrom) return false;
+      if(dateTo&&target>dateTo) return false;
+    }
     return true;
   });
   filtered.sort(function(a,b){return(b._idx||0)-(a._idx||0)});
+
+  // 데스크톱 리스트
   var el=$('listBody');
-  if(!filtered.length){el.innerHTML='<div class="empty-msg">조회된 문의가 없습니다.</div>';return;}
-  el.innerHTML=filtered.map(function(iq,i){
-    var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
-    var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
-    return '<div class="list-item" onclick="openModal('+iq._idx+')">'
-      +'<span class="no">'+(filtered.length-i)+'</span>'
-      +'<span class="company">'+(iq.applyName||'-')+'</span>'
-      +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
-      +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
-      +'<span class="due">'+(fixDate(iq.billDue)||'-')+'</span>'
-      +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
-      +'<span style="text-align:center;font-size:0.78rem;color:#999">'+ts+'</span>'
-      +'</div>';
-  }).join('');
+  if(!filtered.length){el.innerHTML='<div class="empty-msg">조회된 문의가 없습니다.</div>';}
+  else{
+    el.innerHTML=filtered.map(function(iq,i){
+      var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
+      var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
+      var rateStr=iq.rate?(iq.rate+'%'):'-';
+      return '<div class="list-item" onclick="openModal('+iq._idx+')">'
+        +'<span class="no">'+(filtered.length-i)+'</span>'
+        +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
+        +'<span class="date">'+shortDate(ts)+'</span>'
+        +'<span class="company">'+(iq.applyName||'-')+'</span>'
+        +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
+        +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
+        +'<span class="rate">'+rateStr+'</span>'
+        +'<span class="date">'+shortDate(fixDate(iq.billDue)||'-')+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  // 모바일 카드 리스트
+  var mEl=$('listMobile');
+  if(!mEl) return;
+  if(!filtered.length){mEl.innerHTML='<div class="empty-msg">조회된 문의가 없습니다.</div>';}
+  else{
+    mEl.innerHTML=filtered.map(function(iq){
+      var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
+      var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
+      var rateStr=iq.rate?(iq.rate+'%'):'미입력';
+      return '<div class="m-card" onclick="openModal('+iq._idx+')">'
+        +'<div class="m-row1">'
+          +'<span class="m-companies">'+(iq.applyName||'-')+'<span class="arr">→</span>'+(iq.issuerName||'-')+'</span>'
+          +'<span class="badge '+bc+'">'+st+'</span>'
+        +'</div>'
+        +'<div class="m-row2">'
+          +'<span class="m-amount">'+fmt(iq.billAmount)+'원</span>'
+          +'<span class="m-rate">'+rateStr+'</span>'
+        +'</div>'
+        +'<div class="m-dates">'
+          +'<span>접수 <strong>'+shortDate(ts)+'</strong></span>'
+          +'<span>만기 <strong>'+shortDate(fixDate(iq.billDue)||'-')+'</strong></span>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
 }
 
 // ===== 진행바 =====
