@@ -231,7 +231,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
         <h2>관리자 인증</h2>
         <p>관리자 PIN을 입력해 주세요.</p>
         <div class="field">
-          <input type="password" id="pinInput" placeholder="••••" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')doPin()">
+          <input type="password" id="pinInput" placeholder="••••••" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(event.key==='Enter')doPin()">
         </div>
         <button class="pin-btn" onclick="doPin()">확인</button>
         <div class="pin-msg" id="pinMsg"></div>
@@ -320,7 +320,7 @@ h1{text-align:center;color:#1565c0;font-size:1.35rem;padding:18px 0 6px}
 <script>
 // ===== Config =====
 var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
-var ADMIN_PIN = '0000';
+var ADMIN_PIN = '276276';
 
 // ===== 자동 새로고침 (30초) =====
 var autoRefreshTimer = null;
