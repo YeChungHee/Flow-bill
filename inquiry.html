@@ -332,6 +332,7 @@ function calcDays(){
   if(due&&start){
     var settle=nextBusinessDay(due);
     var days=daysBetween(start,fmtDate(settle))+1;
+    days=Math.max(days,30);
     $('usageDays').value=days;
     // 180일 초과 경고
     var ext=$('extNote');

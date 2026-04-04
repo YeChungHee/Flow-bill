@@ -1194,6 +1194,7 @@ function doEditComplete(){
   if(newStart&&newDue){
     var settle = nextBusinessDay(newDue);
     usageDays = daysBetween(newStart, fmtDate(settle))+1;
+    usageDays = Math.max(usageDays, 30);
   }
   // 할인액 재계산
   var fee = iq.fee;
