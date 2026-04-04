@@ -33,16 +33,32 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .btn-new{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3);margin-bottom:18px;transition:all 0.2s}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
 
-/* 리스트 */
+/* 리스트 — 데스크톱 8컬럼 */
 .list-title{font-size:0.92rem;color:#555;font-weight:700;margin-bottom:10px;padding-left:4px}
-.list-item{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);cursor:pointer;transition:all 0.15s}
-.list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.1);transform:translateY(-1px)}
-.list-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.list-company{font-weight:700;color:#333;font-size:0.92rem}
-.list-amount{font-weight:700;color:#1565c0;font-size:0.92rem}
-.list-bottom{display:flex;justify-content:space-between;align-items:center}
-.list-meta{color:#999;font-size:0.78rem}
-.badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:0.72rem;font-weight:700}
+.list-header{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
+.list-item{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
+.list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
+.list-item .no{color:#999;font-size:0.7rem}
+.list-item .company{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .issuer{color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.76rem}
+.list-item .rate{font-size:0.76rem;color:#e65100;text-align:center;font-weight:700}
+.list-item .date{font-size:0.72rem;color:#666;text-align:center}
+
+/* 모바일 카드 뷰 */
+.list-mobile{display:none}
+.m-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06);cursor:pointer;transition:all .15s}
+.m-card:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12)}
+.m-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.m-companies{font-weight:700;font-size:0.82rem;color:#333;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.m-companies .arr{color:#bbb;margin:0 4px;font-weight:400}
+.m-row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.m-amount{font-weight:800;font-size:0.88rem;color:#1565c0}
+.m-rate{font-size:0.74rem;color:#e65100;font-weight:700}
+.m-dates{display:flex;gap:10px;margin-top:6px;font-size:0.68rem;color:#999}
+.m-dates span strong{color:#555;font-weight:600}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.64rem;font-weight:700}
 .badge-wait{background:#fff3e0;color:#e65100}
 .badge-select{background:#e3f2fd;color:#1565c0}
 .badge-input{background:#f3e5f5;color:#7b1fa2}
@@ -50,7 +66,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .badge-endorsed{background:#e0f2f1;color:#00695c}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
-.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.88rem}
+.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
 /* 계좌확인 팝업 */
 .account-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3500;justify-content:center;align-items:center;padding:16px}
 .account-overlay.show{display:flex}
@@ -196,10 +212,21 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   .dash-card .num{font-size:1.8rem}
   .nav-tabs{margin-bottom:24px;padding:5px}
   .nav-tab{padding:13px 0;font-size:0.9rem}
-  .list-item{padding:16px 18px}
   .modal{max-width:600px}
   .modal-body{padding:24px}
   .login-card{padding:36px 28px;max-width:440px;margin:20px auto}
+}
+/* 모바일 (640px 이하) — 리스트 전환 */
+@media(max-width:640px){
+  .list-header{display:none}
+  .list-desktop{display:none}
+  .list-mobile{display:block}
+  .filter-bar{flex-direction:column;gap:6px}
+  .filter-bar input[type="text"]{width:100%;min-width:auto}
+  .filter-bar .filter-row{width:100%}
+  .filter-bar .filter-row select{flex:1}
+  .filter-bar .date-group{width:100%;flex-wrap:wrap}
+  .filter-bar input[type="date"]{flex:1;min-width:0}
 }
 /* 소형 모바일 (380px 이하) */
 @media(max-width:380px){
@@ -211,15 +238,6 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   .dash-card .num{font-size:1.2rem}
   .dash-card .label{font-size:0.65rem}
   .nav-tab{padding:9px 0;font-size:0.8rem}
-  .filter-bar{flex-direction:column;gap:6px}
-  .filter-bar input[type="text"]{width:100%;min-width:auto}
-  .filter-bar .filter-row{width:100%}
-  .filter-bar .filter-row select{flex:1}
-  .filter-bar .date-group{width:100%;flex-wrap:wrap}
-  .filter-bar input[type="date"]{flex:1;min-width:0}
-  .list-item{padding:12px;border-radius:10px}
-  .list-company{font-size:0.85rem}
-  .list-amount{font-size:0.85rem}
   .modal{margin:10px auto;border-radius:12px}
   .modal-body{padding:14px}
   .modal-header{padding:14px 16px 10px}
@@ -315,7 +333,11 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
     </div>
 
     <div class="list-title">신청 이력</div>
-    <div id="listBody"></div>
+    <div class="list-header">
+      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>수취사</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
+    </div>
+    <div id="listBody" class="list-desktop"></div>
+    <div id="listMobile" class="list-mobile"></div>
 
     <div style="text-align:center;margin-top:16px"><a href="#" onclick="doLogout();return false" style="color:#999;font-size:0.78rem;text-decoration:underline">다른 사업자번호로 조회</a></div>
     <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
@@ -601,26 +623,62 @@ function renderDashboard(){
   }
 }
 
+// 날짜 축약 (MM.DD)
+function shortDate(d){return d||'-';}
+
 // ===== 리스트 렌더 =====
 function renderList(){
   renderDashboard();
-  var el = $('listBody');
-  var filtered = getFiltered();
-  if(!filtered.length){
-    el.innerHTML='<div class="empty-msg">'+(allBills.length?'조건에 맞는 내역이 없습니다.':'신청 내역이 없습니다.')+'</div>';
-    return;
-  }
-  // _idx 매핑 후 최신순
   allBills.forEach(function(x,i){x._idx=i;});
-  var items = filtered.slice().reverse();
-  el.innerHTML = items.map(function(iq){
-    var st = STATUS_MAP[iq.status]||'대기';
-    var bc = badgeClass(iq.status);
-    return '<div class="list-item" onclick="openModal('+iq._idx+')">'
-      +'<div class="list-top"><span class="list-company">'+((iq.issuerName||'-'))+'</span><span class="list-amount">\u20a9'+fmt(iq.billAmount)+'</span></div>'
-      +'<div class="list-bottom"><span class="list-meta">'+((fixDate(iq.billDue)||'-'))+' · '+((iq.uid||''))+'</span><span class="badge '+bc+'">'+st+'</span></div>'
-      +'</div>';
-  }).join('');
+  var filtered = getFiltered();
+  var emptyMsg = allBills.length?'조건에 맞는 내역이 없습니다.':'신청 내역이 없습니다.';
+
+  // 데스크톱 리스트 (8컬럼 그리드)
+  var el=$('listBody');
+  if(!filtered.length){el.innerHTML='<div class="empty-msg">'+emptyMsg+'</div>';}
+  else{
+    el.innerHTML=filtered.map(function(iq,i){
+      var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
+      var startDt=fixDate(iq.startDate)||'-';
+      var rateStr=iq.rate?(iq.rate+'%'):'-';
+      return '<div class="list-item" onclick="openModal('+iq._idx+')">'
+        +'<span class="no">'+(filtered.length-i)+'</span>'
+        +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
+        +'<span class="date">'+shortDate(startDt)+'</span>'
+        +'<span class="company">'+(iq.applyName||'-')+'</span>'
+        +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
+        +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
+        +'<span class="rate">'+rateStr+'</span>'
+        +'<span class="date">'+shortDate(fixDate(iq.billDue)||'-')+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  // 모바일 카드 리스트
+  var mEl=$('listMobile');
+  if(!mEl) return;
+  if(!filtered.length){mEl.innerHTML='<div class="empty-msg">'+emptyMsg+'</div>';}
+  else{
+    mEl.innerHTML=filtered.map(function(iq){
+      var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
+      var startDt2=fixDate(iq.startDate)||'-';
+      var rateStr=iq.rate?(iq.rate+'%'):'미입력';
+      return '<div class="m-card" onclick="openModal('+iq._idx+')">'
+        +'<div class="m-row1">'
+          +'<span class="m-companies">'+(iq.applyName||'-')+'<span class="arr">\u2192</span>'+(iq.issuerName||'-')+'</span>'
+          +'<span class="badge '+bc+'">'+st+'</span>'
+        +'</div>'
+        +'<div class="m-row2">'
+          +'<span class="m-amount">'+fmt(iq.billAmount)+'원</span>'
+          +'<span class="m-rate">'+rateStr+'</span>'
+        +'</div>'
+        +'<div class="m-dates">'
+          +'<span>입금예정 <strong>'+shortDate(startDt2)+'</strong></span>'
+          +'<span>만기 <strong>'+shortDate(fixDate(iq.billDue)||'-')+'</strong></span>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
 }
 
 // ===== 상태 진행바 HTML =====
