@@ -19,6 +19,16 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
 .c-total{color:#1565c0}.c-prog{color:#e65100}.c-done{color:#2e7d32}
 
+/* 필터 바 */
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.82rem;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:#1565c0}
+.filter-bar input[type="text"]{flex:1;min-width:120px}
+.filter-bar input[type="date"]{width:130px}
+.filter-bar .filter-row{display:flex;gap:6px}
+.filter-bar .date-group{display:flex;align-items:center;gap:4px}
+.filter-bar .date-sep{font-size:0.7rem;color:#bbb}
+
 /* 신청 버튼 */
 .btn-new{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3);margin-bottom:18px;transition:all 0.2s}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
@@ -201,6 +211,12 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   .dash-card .num{font-size:1.2rem}
   .dash-card .label{font-size:0.65rem}
   .nav-tab{padding:9px 0;font-size:0.8rem}
+  .filter-bar{flex-direction:column;gap:6px}
+  .filter-bar input[type="text"]{width:100%;min-width:auto}
+  .filter-bar .filter-row{width:100%}
+  .filter-bar .filter-row select{flex:1}
+  .filter-bar .date-group{width:100%;flex-wrap:wrap}
+  .filter-bar input[type="date"]{flex:1;min-width:0}
   .list-item{padding:12px;border-radius:10px}
   .list-company{font-size:0.85rem}
   .list-amount{font-size:0.85rem}
@@ -258,11 +274,44 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
     </div>
     <div class="login-info" id="loginInfo"></div>
 
+    <!-- 필터 표시기 -->
+    <div id="filterIndicator" style="display:none;background:#fff3e0;border:1.5px solid #ffe0b2;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:0.78rem;color:#e65100;display:none;align-items:center;justify-content:space-between">
+      <span id="filterIndicatorText"></span>
+      <a href="#" onclick="clearAllFilters();return false;" style="color:#1565c0;font-weight:700;text-decoration:none;font-size:0.78rem;white-space:nowrap;margin-left:10px">초기화</a>
+    </div>
+
     <!-- 대시보드 -->
     <div class="dash">
       <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체 신청</div></div>
       <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="label">진행중</div></div>
       <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">완료</div></div>
+    </div>
+
+    <!-- 필터 바 -->
+    <div class="filter-bar">
+      <input type="text" id="filterText" placeholder="발행사 검색" oninput="renderList()">
+      <div class="filter-row">
+        <select id="filterStatus" onchange="renderList()">
+          <option value="all">전체</option>
+          <option value="wait">조건대기</option>
+          <option value="select">조건선택</option>
+          <option value="input">조건입력</option>
+          <option value="endorse">배서진행</option>
+          <option value="endorsed">배서완료</option>
+          <option value="done">입금완료</option>
+          <option value="cancel">취소</option>
+        </select>
+        <select id="filterDateType" onchange="toggleDateRange();renderList()">
+          <option value="none">날짜검색</option>
+          <option value="start">입금예정일</option>
+          <option value="due">만기일</option>
+        </select>
+      </div>
+      <div class="date-group" id="dateRange" style="display:none">
+        <input type="date" id="dateFrom" onchange="renderList()">
+        <span class="date-sep">~</span>
+        <input type="date" id="dateTo" onchange="renderList()">
+      </div>
     </div>
 
     <div class="list-title">신청 이력</div>
@@ -465,6 +514,55 @@ function loadAll(){
 
 var currentIdx = -1;
 
+// ===== 날짜 필터 토글 =====
+function toggleDateRange(){
+  var dt=$('filterDateType');
+  $('dateRange').style.display=dt.value==='none'?'none':'flex';
+}
+
+// ===== 공통 필터 함수 =====
+function getFiltered(){
+  var filter=($('filterText')?$('filterText').value:'').trim().toLowerCase();
+  var status=$('filterStatus')?$('filterStatus').value:'all';
+  var dateType=$('filterDateType')?$('filterDateType').value:'none';
+  var dateFrom=$('dateFrom')?$('dateFrom').value:'';
+  var dateTo=$('dateTo')?$('dateTo').value:'';
+
+  return allBills.filter(function(x){
+    if(status!=='all'&&x.status!==status) return false;
+    if(filter){
+      var h=((x.issuerName||'')+(x.applyName||'')).toLowerCase();
+      if(h.indexOf(filter)===-1) return false;
+    }
+    if(dateType!=='none'){
+      var target=dateType==='start'?fixDate(x.startDate):fixDate(x.billDue);
+      if(dateFrom&&target<dateFrom) return false;
+      if(dateTo&&target>dateTo) return false;
+    }
+    return true;
+  });
+}
+
+function isFilterActive(){
+  var filter=($('filterText')?$('filterText').value:'').trim();
+  var status=$('filterStatus')?$('filterStatus').value:'all';
+  var dateType=$('filterDateType')?$('filterDateType').value:'none';
+  var dateFrom=$('dateFrom')?$('dateFrom').value:'';
+  var dateTo=$('dateTo')?$('dateTo').value:'';
+  return !!(filter||status!=='all'||(dateType!=='none'&&(dateFrom||dateTo)));
+}
+
+function clearAllFilters(){
+  if($('filterText'))$('filterText').value='';
+  if($('filterStatus'))$('filterStatus').value='all';
+  if($('filterDateType'))$('filterDateType').value='none';
+  if($('dateFrom'))$('dateFrom').value='';
+  if($('dateTo'))$('dateTo').value='';
+  $('dateRange').style.display='none';
+  renderDashboard();
+  renderList();
+}
+
 // 상태 한글 매핑
 var STATUS_MAP = {
   wait:'조건대기', select:'조건선택', input:'조건입력', endorse:'배서진행', endorsed:'배서완료', done:'입금완료', cancel:'취소'
@@ -475,22 +573,46 @@ function badgeClass(s){
 
 // ===== 대시보드 렌더 =====
 function renderDashboard(){
-  var prog = allBills.filter(function(x){return x.status!=='done'&&x.status!=='cancel'}).length;
-  var done = allBills.filter(function(x){return x.status==='done'}).length;
-  $('dTotal').textContent = allBills.length;
+  var data = isFilterActive() ? getFiltered() : allBills;
+  var prog = data.filter(function(x){return x.status!=='done'&&x.status!=='cancel'}).length;
+  var done = data.filter(function(x){return x.status==='done'}).length;
+  $('dTotal').textContent = data.length;
   $('dProg').textContent = prog;
   $('dDone').textContent = done;
+
+  // 필터 표시기
+  var ind=$('filterIndicator');
+  if(ind){
+    if(isFilterActive()){
+      var parts=[];
+      var ft=($('filterText')?$('filterText').value:'').trim();
+      if(ft) parts.push('"'+ft+'"');
+      var fs=$('filterStatus')?$('filterStatus').value:'all';
+      if(fs!=='all'){var sm={wait:'조건대기',select:'조건선택',input:'조건입력',endorse:'배서진행',endorsed:'배서완료',done:'입금완료',cancel:'취소'};parts.push(sm[fs]||fs);}
+      var fdt=$('filterDateType')?$('filterDateType').value:'none';
+      var df=$('dateFrom')?$('dateFrom').value:'';
+      var dt=$('dateTo')?$('dateTo').value:'';
+      if(fdt!=='none'&&(df||dt)){var dLabel=fdt==='start'?'입금예정일':'만기일';parts.push(dLabel+' '+(df||'~')+' ~ '+(dt||''));}
+      $('filterIndicatorText').innerHTML='필터 적용 중: '+parts.join(', ')+' ('+data.length+'/'+allBills.length+'건)';
+      ind.style.display='flex';
+    } else {
+      ind.style.display='none';
+    }
+  }
 }
 
 // ===== 리스트 렌더 =====
 function renderList(){
+  renderDashboard();
   var el = $('listBody');
-  if(!allBills.length){
-    el.innerHTML='<div class="empty-msg">신청 내역이 없습니다.</div>';
+  var filtered = getFiltered();
+  if(!filtered.length){
+    el.innerHTML='<div class="empty-msg">'+(allBills.length?'조건에 맞는 내역이 없습니다.':'신청 내역이 없습니다.')+'</div>';
     return;
   }
-  // 최신순
-  var items = allBills.map(function(x,i){x._idx=i;return x;}).reverse();
+  // _idx 매핑 후 최신순
+  allBills.forEach(function(x,i){x._idx=i;});
+  var items = filtered.slice().reverse();
   el.innerHTML = items.map(function(iq){
     var st = STATUS_MAP[iq.status]||'대기';
     var bc = badgeClass(iq.status);

@@ -265,6 +265,10 @@ h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
   <div class="bar"></div>
 
   <!-- 대시보드 -->
+  <div id="filterIndicator" style="display:none;text-align:center;padding:4px 10px;margin-bottom:6px;background:#fff3e0;border-radius:8px;font-size:0.68rem;font-weight:600;color:#e65100">
+    <span id="filterIndicatorText"></span>
+    <a href="#" onclick="clearAllFilters();return false;" style="margin-left:8px;color:#1565c0;text-decoration:underline;font-weight:700">초기화</a>
+  </div>
   <div class="dash">
     <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체</div></div>
     <div class="dash-card"><div class="num c-wait" id="dWait">0</div><div class="label">대기</div></div>
@@ -489,33 +493,10 @@ var currentIdx = -1;
 var STATUS_MAP = {wait:'조건대기',select:'조건선택',input:'조건입력',endorse:'배서진행',endorsed:'배서완료',done:'입금완료',cancel:'취소'};
 function badgeClass(s){return{wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';}
 
-// ===== 대시보드 =====
-function renderDashboard(){
-  var wait=0,prog=0,done=0,total=0;
-  list.forEach(function(x){
-    total+=x.billAmount||0;
-    if(x.status==='wait') wait++;
-    else if(x.status==='done') done++;
-    else if(x.status!=='cancel') prog++;
-  });
-  $('dTotal').textContent=list.length;
-  $('dWait').textContent=wait;
-  $('dProg').textContent=prog;
-  $('dDone').textContent=done;
-  $('dAmount').textContent=total>=100000000?(total/100000000).toFixed(1)+'억':total>=10000?(total/10000).toFixed(0)+'만':fmt(total);
-}
-
-// ===== 날짜 필터 토글 =====
-function toggleDateRange(){
-  var dt=$('filterDateType').value;
-  $('dateRange').style.display=(dt==='none')?'none':'flex';
-}
-function shortDate(d){if(!d)return'-';var p=d.split('-');return p.length===3?(p[1]+'.'+p[2]):d;}
-
-// ===== 리스트 =====
-function renderList(){
-  var filter=$('filterText').value.trim().toLowerCase();
-  var status=$('filterStatus').value;
+// ===== 공통 필터 =====
+function getFiltered(){
+  var filter=$('filterText')?$('filterText').value.trim().toLowerCase():'';
+  var status=$('filterStatus')?$('filterStatus').value:'all';
   var dateType=$('filterDateType')?$('filterDateType').value:'none';
   var dateFrom=$('dateFrom')?$('dateFrom').value:'';
   var dateTo=$('dateTo')?$('dateTo').value:'';
@@ -533,6 +514,79 @@ function renderList(){
     return true;
   });
   filtered.sort(function(a,b){return(b._idx||0)-(a._idx||0)});
+  return filtered;
+}
+
+function isFilterActive(){
+  var filter=$('filterText')?$('filterText').value.trim():'';
+  var status=$('filterStatus')?$('filterStatus').value:'all';
+  var dateType=$('filterDateType')?$('filterDateType').value:'none';
+  var dateFrom=$('dateFrom')?$('dateFrom').value:'';
+  var dateTo=$('dateTo')?$('dateTo').value:'';
+  return !!(filter || status!=='all' || (dateType!=='none' && (dateFrom||dateTo)));
+}
+
+function clearAllFilters(){
+  if($('filterText')) $('filterText').value='';
+  if($('filterStatus')) $('filterStatus').value='all';
+  if($('filterDateType')){$('filterDateType').value='none';toggleDateRange();}
+  if($('dateFrom')) $('dateFrom').value='';
+  if($('dateTo')) $('dateTo').value='';
+  renderDashboard();
+  renderList();
+}
+
+// ===== 대시보드 =====
+function renderDashboard(){
+  var data=isFilterActive()?getFiltered():list;
+  var wait=0,prog=0,done=0,total=0;
+  data.forEach(function(x){
+    total+=x.billAmount||0;
+    if(x.status==='wait') wait++;
+    else if(x.status==='done') done++;
+    else if(x.status!=='cancel') prog++;
+  });
+  $('dTotal').textContent=data.length;
+  $('dWait').textContent=wait;
+  $('dProg').textContent=prog;
+  $('dDone').textContent=done;
+  $('dAmount').textContent=total>=100000000?(total/100000000).toFixed(1)+'억':total>=10000?(total/10000).toFixed(0)+'만':fmt(total);
+
+  // 필터 인디케이터
+  var ind=$('filterIndicator');
+  if(ind){
+    if(isFilterActive()){
+      var parts=[];
+      var ft=$('filterText')?$('filterText').value.trim():'';
+      if(ft) parts.push('"'+ft+'"');
+      var st=$('filterStatus')?$('filterStatus').value:'all';
+      if(st!=='all') parts.push(STATUS_MAP[st]||st);
+      var dt=$('filterDateType')?$('filterDateType').value:'none';
+      if(dt!=='none'){
+        var label=dt==='start'?'입금예정일':'만기일';
+        var df=$('dateFrom')?$('dateFrom').value:'';
+        var dtt=$('dateTo')?$('dateTo').value:'';
+        if(df||dtt) parts.push(label+' '+(df||'')+'~'+(dtt||''));
+      }
+      $('filterIndicatorText').textContent='필터 적용 중: '+parts.join(' · ')+' ('+data.length+'/'+list.length+'건)';
+      ind.style.display='block';
+    } else {
+      ind.style.display='none';
+    }
+  }
+}
+
+// ===== 날짜 필터 토글 =====
+function toggleDateRange(){
+  var dt=$('filterDateType').value;
+  $('dateRange').style.display=(dt==='none')?'none':'flex';
+}
+function shortDate(d){if(!d)return'-';var p=d.split('-');return p.length===3?(p[1]+'.'+p[2]):d;}
+
+// ===== 리스트 =====
+function renderList(){
+  renderDashboard();
+  var filtered=getFiltered();
 
   // 데스크톱 리스트
   var el=$('listBody');
