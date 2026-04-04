@@ -288,7 +288,7 @@ h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
       </select>
       <select id="filterDateType" onchange="toggleDateRange();renderList()">
         <option value="none">날짜검색</option>
-        <option value="receipt">접수일</option>
+        <option value="start">입금예정일</option>
         <option value="due">만기일</option>
       </select>
     </div>
@@ -303,7 +303,7 @@ h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
   <div class="list-header">
     <span>#</span>
     <span style="text-align:center">상태</span>
-    <span style="text-align:center">접수일</span>
+    <span style="text-align:center">입금예정일</span>
     <span>수취사</span>
     <span>발행사</span>
     <span style="text-align:right">어음금액</span>
@@ -525,7 +525,7 @@ function renderList(){
     if(filter){var h=((x.applyName||'')+(x.issuerName||'')+(x.uid||'')).toLowerCase();if(h.indexOf(filter)===-1)return false;}
     if(dateType!=='none'){
       var target='';
-      if(dateType==='receipt'){target=x.timestamp?x.timestamp.split(' ')[0]:'';}
+      if(dateType==='start'){target=fixDate(x.startDate);}
       else if(dateType==='due'){target=fixDate(x.billDue);}
       if(dateFrom&&target<dateFrom) return false;
       if(dateTo&&target>dateTo) return false;
@@ -540,12 +540,12 @@ function renderList(){
   else{
     el.innerHTML=filtered.map(function(iq,i){
       var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
-      var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
+      var startDt=fixDate(iq.startDate)||'-';
       var rateStr=iq.rate?(iq.rate+'%'):'-';
       return '<div class="list-item" onclick="openModal('+iq._idx+')">'
         +'<span class="no">'+(filtered.length-i)+'</span>'
         +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
-        +'<span class="date">'+shortDate(ts)+'</span>'
+        +'<span class="date">'+shortDate(startDt)+'</span>'
         +'<span class="company">'+(iq.applyName||'-')+'</span>'
         +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
         +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
@@ -562,7 +562,7 @@ function renderList(){
   else{
     mEl.innerHTML=filtered.map(function(iq){
       var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
-      var ts=iq.timestamp?iq.timestamp.split(' ')[0]:'-';
+      var startDt2=fixDate(iq.startDate)||'-';
       var rateStr=iq.rate?(iq.rate+'%'):'미입력';
       return '<div class="m-card" onclick="openModal('+iq._idx+')">'
         +'<div class="m-row1">'
@@ -574,7 +574,7 @@ function renderList(){
           +'<span class="m-rate">'+rateStr+'</span>'
         +'</div>'
         +'<div class="m-dates">'
-          +'<span>접수 <strong>'+shortDate(ts)+'</strong></span>'
+          +'<span>입금예정 <strong>'+shortDate(startDt2)+'</strong></span>'
           +'<span>만기 <strong>'+shortDate(fixDate(iq.billDue)||'-')+'</strong></span>'
         +'</div>'
         +'</div>';
