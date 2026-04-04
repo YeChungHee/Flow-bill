@@ -550,7 +550,7 @@ function getFiltered(){
   var dateFrom=$('dateFrom')?$('dateFrom').value:'';
   var dateTo=$('dateTo')?$('dateTo').value:'';
 
-  return allBills.filter(function(x){
+  var result=allBills.filter(function(x){
     if(status!=='all'&&x.status!==status) return false;
     if(filter){
       var h=((x.issuerName||'')+(x.applyName||'')).toLowerCase();
@@ -563,6 +563,13 @@ function getFiltered(){
     }
     return true;
   });
+  // 입금예정일 기준 최신순 정렬
+  result.sort(function(a,b){
+    var da=fixDate(a.startDate)||'';
+    var db=fixDate(b.startDate)||'';
+    return da>db?-1:da<db?1:0;
+  });
+  return result;
 }
 
 function isFilterActive(){
