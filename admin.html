@@ -444,6 +444,7 @@ function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;re
 function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
 function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function calcDiscount(amount,rate,days,splitCount){
+  days = Math.max(days, 30);
   var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
   var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
   return baseFee + extraSplit;
@@ -1121,7 +1122,7 @@ function showToast(msg,type){
 // ===== 사용가이드 팝업 =====
 function openGuide(){
   var ov=document.getElementById('guideOverlay');
-  document.getElementById('guideFrame').src='사용가이드.html';
+  document.getElementById('guideFrame').src='guide.html';
   ov.style.display='flex';
   document.body.style.overflow='hidden';
 }

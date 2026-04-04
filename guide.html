@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전자어음 할인 시스템 — 사용 가이드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f7fa;
+  color: #1a1a2e;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+/* ── Print ── */
+@media print {
+  body { background:#fff; font-size:11px; }
+  .container { max-width:100%; padding:0 20px; box-shadow:none; }
+  .hero { padding:30px 20px !important; }
+  .nav-toc { display:none; }
+  .section { page-break-inside:avoid; }
+  a { color:#1a1a2e; text-decoration:none; }
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 0 40px rgba(0,0,0,0.06);
+}
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  color: #fff;
+  padding: 48px 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content:'';
+  position:absolute; top:-60px; right:-60px;
+  width:200px; height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+.hero h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.hero p {
+  font-size: 13px;
+  opacity: 0.85;
+  font-weight: 300;
+}
+.hero .badge {
+  display:inline-block;
+  margin-top:14px;
+  padding:4px 14px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.15);
+  font-size:11px;
+  font-weight:500;
+}
+
+/* ── Nav TOC ── */
+.nav-toc {
+  background:#f8f9fb;
+  border-bottom:1px solid #e8ecf1;
+  padding:16px 48px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.nav-toc a {
+  display:inline-block;
+  padding:5px 14px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:500;
+  color:#546e7a;
+  text-decoration:none;
+  transition:all .2s;
+}
+.nav-toc a:hover { background:#e3f2fd; color:#1565c0; }
+.nav-toc a.admin { color:#e65100; }
+.nav-toc a.admin:hover { background:#fff3e0; color:#e65100; }
+
+/* ── Content ── */
+.content { padding: 40px 48px 60px; }
+
+.section { margin-bottom: 44px; }
+
+.section-label {
+  display:inline-block;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:3px 10px;
+  border-radius:4px;
+  margin-bottom:10px;
+}
+.section-label.user { background:#e3f2fd; color:#1565c0; }
+.section-label.admin { background:#fff3e0; color:#e65100; }
+.section-label.info { background:#e8f5e9; color:#2e7d32; }
+
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8ecf1;
+}
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #37474f;
+  margin: 20px 0 10px;
+}
+
+p { margin-bottom: 12px; color:#455a64; }
+
+.tip {
+  background:#fffde7;
+  border-left:3px solid #fbc02d;
+  padding:12px 16px;
+  border-radius:0 8px 8px 0;
+  margin:16px 0;
+  font-size:13px;
+  color:#5d4037;
+}
+.tip strong { color:#e65100; }
+
+/* ── Tables ── */
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin:14px 0 20px;
+  font-size:13px;
+}
+th {
+  background:#f5f7fa;
+  font-weight:600;
+  color:#37474f;
+  text-align:left;
+  padding:10px 14px;
+  border-bottom:2px solid #e0e0e0;
+  font-size:12px;
+}
+td {
+  padding:9px 14px;
+  border-bottom:1px solid #eee;
+  color:#455a64;
+  vertical-align:top;
+}
+tr:hover td { background:#fafbfc; }
+
+.status-badge {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:4px;
+  font-size:11px;
+  font-weight:600;
+}
+.badge-wait { background:#fff3e0; color:#e65100; }
+.badge-select { background:#e3f2fd; color:#1565c0; }
+.badge-input { background:#f3e5f5; color:#7b1fa2; }
+.badge-endorse { background:#e0f2f1; color:#00695c; }
+.badge-done { background:#e8f5e9; color:#2e7d32; }
+
+/* ── Process Flow ── */
+.process-flow {
+  display:flex;
+  align-items:flex-start;
+  gap:0;
+  justify-content:center;
+  margin:20px 0 30px;
+  flex-wrap:wrap;
+}
+.pf-step {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:90px;
+  text-align:center;
+}
+.pf-num {
+  width:32px; height:32px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:700;
+  color:#fff;
+  margin-bottom:6px;
+}
+.pf-num.user-c { background:#1565c0; }
+.pf-num.admin-c { background:#e65100; }
+.pf-text { font-size:11px; font-weight:500; color:#455a64; line-height:1.4; }
+.pf-arrow { display:flex; align-items:center; color:#bbb; font-size:18px; padding:0 2px; margin-top:8px; }
+
+/* ── Info Cards ── */
+.info-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin:16px 0;
+}
+.info-card {
+  padding:18px;
+  border-radius:10px;
+  border:1px solid #e8ecf1;
+}
+.info-card h4 {
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+.info-card p { font-size:12px; margin:0; color:#78909c; }
+.info-card a { color:#1565c0; text-decoration:none; font-weight:500; }
+.info-card a:hover { text-decoration:underline; }
+
+/* ── Formula ── */
+.formula {
+  background:#f5f7fa;
+  border:1px solid #e0e0e0;
+  border-radius:8px;
+  padding:16px 20px;
+  margin:14px 0;
+  font-size:13px;
+  color:#37474f;
+  font-family:'Noto Sans KR', monospace;
+}
+.formula strong { color:#1565c0; }
+
+/* ── Divider ── */
+.divider {
+  height:1px;
+  background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+  margin:40px 0;
+}
+
+/* ── Footer ── */
+.footer {
+  background:#f5f7fa;
+  padding:24px 48px;
+  text-align:center;
+  font-size:12px;
+  color:#90a4ae;
+  border-top:1px solid #e8ecf1;
+}
+.footer strong { color:#546e7a; }
+
+/* ── UL ── */
+ul { padding-left:20px; margin:8px 0 14px; }
+li { margin-bottom:5px; color:#455a64; font-size:13px; }
+li strong { color:#37474f; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>전자어음 할인 시스템 — 사용 가이드</h1>
+    <p>플로우파트너스 전자어음 할인 시스템 사용 가이드입니다.<br>신청자(고객사)와 관리자 각각의 역할별로 안내합니다.</p>
+    <span class="badge">v1.0 · 2026.04</span>
+  </div>
+
+  <!-- TOC -->
+  <nav class="nav-toc">
+    <a href="#access">접속 정보</a>
+    <a href="#process">프로세스</a>
+    <a href="#a1">A1. 문의 접수</a>
+    <a href="#a2">A2. 대시보드</a>
+    <a href="#a3">A3. 할인내역서</a>
+    <a href="#b1" class="admin">B1. 관리자 로그인</a>
+    <a href="#b2" class="admin">B2. 관리자 대시보드</a>
+    <a href="#b3" class="admin">B3. 조건 입력</a>
+    <a href="#b4" class="admin">B4. 입금 완료</a>
+    <a href="#ref">참고 사항</a>
+  </nav>
+
+  <div class="content">
+
+    <!-- 접속 정보 -->
+    <div class="section" id="access">
+      <span class="section-label info">접속 정보</span>
+      <h2>접속 정보</h2>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>신청자 페이지</h4>
+          <p><a href="https://yechunghee.github.io/Flow-bill/" target="_blank">https://yechunghee.github.io/Flow-bill/</a></p>
+          <p style="margin-top:6px;">인증: <strong>사업자번호 (10자리)</strong></p>
+        </div>
+        <div class="info-card">
+          <h4>관리자 페이지</h4>
+          <p><a href="https://yechunghee.github.io/Flow-bill/admin.html" target="_blank">https://yechunghee.github.io/Flow-bill/admin.html</a></p>
+          <p style="margin-top:6px;">인증: <strong>6자리 PIN</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 전체 프로세스 -->
+    <div class="section" id="process">
+      <span class="section-label info">전체 프로세스</span>
+      <h2>전체 프로세스 개요</h2>
+      <p>할인 문의부터 입금 완료까지 <strong>7단계</strong>로 진행됩니다. 신청자와 관리자가 번갈아 액션을 수행합니다.</p>
+
+      <div class="process-flow">
+        <div class="pf-step"><div class="pf-num user-c">1</div><div class="pf-text">할인 문의<br>접수</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num admin-c">2</div><div class="pf-text">문의 확인<br>검토</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num admin-c">3</div><div class="pf-text">할인 조건<br>입력</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num user-c">4</div><div class="pf-text">조건 확인<br>진행/취소</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num user-c">5</div><div class="pf-text">계좌 입력<br>첨부 제출</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num user-c">6</div><div class="pf-text">배서 완료<br>확인</div></div>
+        <div class="pf-arrow">→</div>
+        <div class="pf-step"><div class="pf-num admin-c">7</div><div class="pf-text">입금 완료<br>처리</div></div>
+      </div>
+
+      <table>
+        <tr><th>단계</th><th>담당</th><th>액션</th><th>상태값</th><th>페이지</th></tr>
+        <tr>
+          <td>1단계</td><td>신청자</td>
+          <td>할인 문의 접수 (업체정보 + 어음정보 입력)</td>
+          <td><span class="status-badge badge-wait">wait</span></td>
+          <td>inquiry.html</td>
+        </tr>
+        <tr>
+          <td>2단계</td><td>관리자</td>
+          <td>신규 문의 확인 및 검토</td>
+          <td><span class="status-badge badge-wait">wait</span></td>
+          <td>admin.html</td>
+        </tr>
+        <tr>
+          <td>3단계</td><td>관리자</td>
+          <td>할인 조건 입력 (할인율 · 수수료 · 분할배서)</td>
+          <td><span class="status-badge badge-wait">wait</span> → <span class="status-badge badge-select">select</span></td>
+          <td>admin.html</td>
+        </tr>
+        <tr>
+          <td>4단계</td><td>신청자</td>
+          <td>할인 조건 확인 → 진행 또는 취소</td>
+          <td><span class="status-badge badge-select">select</span> → <span class="status-badge badge-input">input</span></td>
+          <td>dashboard.html</td>
+        </tr>
+        <tr>
+          <td>5단계</td><td>신청자</td>
+          <td>입금 계좌 입력 + 첨부파일 제출</td>
+          <td><span class="status-badge badge-input">input</span> → <span class="status-badge badge-endorse">endorse</span></td>
+          <td>dashboard.html</td>
+        </tr>
+        <tr>
+          <td>6단계</td><td>신청자</td>
+          <td>배서 완료 확인</td>
+          <td><span class="status-badge badge-endorse">endorse (completed)</span></td>
+          <td>dashboard.html</td>
+        </tr>
+        <tr>
+          <td>7단계</td><td>관리자</td>
+          <td>입금 완료 처리</td>
+          <td><span class="status-badge badge-endorse">endorse</span> → <span class="status-badge badge-done">done</span></td>
+          <td>admin.html</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ═══════ 파트 A ═══════ -->
+    <h2 style="font-size:18px; color:#1565c0; border:none; padding:0; margin-bottom:24px;">파트 A. 신청자 가이드</h2>
+
+    <!-- A1 -->
+    <div class="section" id="a1">
+      <span class="section-label user">신청자</span>
+      <h2>A1. 할인 문의 접수</h2>
+      <p>신청자 페이지에 접속하면 <strong>할인 문의</strong> 탭이 활성화된 상태로 표시됩니다.</p>
+      <p style="font-size:12px; color:#1565c0;">
+        <a href="https://yechunghee.github.io/Flow-bill/inquiry.html" target="_blank">신청 페이지 바로가기 →</a>
+      </p>
+
+      <h3>입력 항목</h3>
+      <table>
+        <tr><th>구분</th><th>필드</th><th>설명</th></tr>
+        <tr><td>수취사 정보</td><td>사업자번호</td><td>000-00-00000 형식, 이전 신청 시 수취사명 자동완성</td></tr>
+        <tr><td>수취사 정보</td><td>수취사명</td><td>자동완성 또는 직접 입력</td></tr>
+        <tr><td>어음 정보</td><td>발행사 사업자번호</td><td>이전 발행사 목록에서 선택 가능</td></tr>
+        <tr><td>어음 정보</td><td>발행사명</td><td>사업자번호 입력 시 자동완성</td></tr>
+        <tr><td>어음 정보</td><td>어음금액 (원)</td><td>숫자 입력 시 콤마 자동 포맷</td></tr>
+        <tr><td>어음 정보</td><td>만기일</td><td>날짜 선택</td></tr>
+        <tr><td>어음 정보</td><td>입금예정일</td><td>기본값: 오늘 날짜</td></tr>
+        <tr><td>자동 계산</td><td>사용일수</td><td>만기일과 입금예정일 기반 자동 산정 (공휴일 반영)</td></tr>
+      </table>
+
+      <div class="tip">
+        <strong>Tip.</strong> 사업자번호를 입력하면 이전 신청 내역에서 수취사명과 발행사 목록이 자동으로 표시됩니다. 반복 신청 시 입력 시간을 줄일 수 있습니다.
+      </div>
+
+      <p>모든 항목 입력 후 <strong>할인 조회 요청</strong> 버튼을 클릭하면 접수가 완료되고 자동으로 대시보드로 이동합니다.</p>
+    </div>
+
+    <!-- A2 -->
+    <div class="section" id="a2">
+      <span class="section-label user">신청자</span>
+      <h2>A2. 내 신청현황 (대시보드)</h2>
+      <p><strong>내 신청현황</strong> 탭 또는 신청 후 자동 이동으로 진입합니다.</p>
+      <p style="font-size:12px; color:#1565c0;">
+        <a href="https://yechunghee.github.io/Flow-bill/dashboard.html" target="_blank">대시보드 바로가기 →</a>
+      </p>
+
+      <h3>로그인</h3>
+      <ul>
+        <li>할인 문의 시 입력한 <strong>사업자번호</strong>로 조회합니다.</li>
+        <li>로그인 후 상단에 <strong>업체명과 사업자번호</strong>(000-00-00000 형식)가 표시됩니다.</li>
+      </ul>
+
+      <h3>대시보드 구성</h3>
+      <ul>
+        <li><strong>요약 카드</strong>: 전체 신청 / 진행중 / 완료 건수</li>
+        <li><strong>신청 목록</strong>: 각 건별 발행사명, 금액, 상태 배지 표시</li>
+        <li>목록의 건을 클릭하면 <strong>상세 모달</strong>이 열립니다.</li>
+      </ul>
+
+      <h3>상태별 액션</h3>
+      <table>
+        <tr><th>상태</th><th>신청자 액션</th></tr>
+        <tr><td><span class="status-badge badge-wait">대기 (wait)</span></td><td>관리자 검토 대기 — 별도 액션 없음</td></tr>
+        <tr><td><span class="status-badge badge-select">선택 (select)</span></td><td>할인 조건 확인 → <strong>진행요청</strong> 또는 <strong>취소</strong> 선택</td></tr>
+        <tr><td><span class="status-badge badge-input">입력 (input)</span></td><td>입금 계좌정보 + 첨부파일 제출 → <strong>저장</strong> 클릭</td></tr>
+        <tr><td><span class="status-badge badge-endorse">배서 (endorse)</span></td><td>배서 대상 계좌 확인 → <strong>배서완료</strong> 버튼 클릭</td></tr>
+        <tr><td><span class="status-badge badge-done">완료 (done)</span></td><td><strong>할인내역서 보기</strong> 버튼으로 할인내역서 확인 및 PDF 저장</td></tr>
+      </table>
+    </div>
+
+    <!-- A3 -->
+    <div class="section" id="a3">
+      <span class="section-label user">신청자</span>
+      <h2>A3. 할인내역서</h2>
+      <p>입금 완료(done) 상태의 건을 상세 모달에서 열면 <strong>할인내역서 보기</strong> 버튼이 표시됩니다.</p>
+      <ul>
+        <li>클릭 시 새 탭에서 할인내역서가 열림</li>
+        <li>할인 조건 (발행사, 액면금액, 할인율, 만기일, 수수료, 지급금액) 확인</li>
+        <li><strong>다운로드</strong> 버튼으로 PDF 저장 (브라우저 인쇄 기능 활용)</li>
+        <li>저장 후 탭 자동 닫힘</li>
+      </ul>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ═══════ 파트 B ═══════ -->
+    <h2 style="font-size:18px; color:#e65100; border:none; padding:0; margin-bottom:24px;">파트 B. 관리자 가이드</h2>
+
+    <!-- B1 -->
+    <div class="section" id="b1">
+      <span class="section-label admin">관리자</span>
+      <h2>B1. 관리자 로그인</h2>
+      <p>admin.html 접속 시 <strong>6자리 PIN</strong>을 입력하여 인증합니다.</p>
+      <p style="font-size:12px; color:#e65100;">
+        <a href="https://yechunghee.github.io/Flow-bill/admin.html" target="_blank">관리자 페이지 바로가기 →</a>
+      </p>
+      <ul>
+        <li>관리자 URL은 비공개로 유지 (A: URL 보안)</li>
+        <li>PIN 입력 필요 (B: PIN 보안)</li>
+        <li>두 가지 보안이 동시에 적용되는 <strong>A+B 보안 방식</strong></li>
+      </ul>
+    </div>
+
+    <!-- B2 -->
+    <div class="section" id="b2">
+      <span class="section-label admin">관리자</span>
+      <h2>B2. 관리자 대시보드</h2>
+      <p>로그인 후 모든 신청 건이 상태별로 표시됩니다.</p>
+
+      <h3>상태별 관리자 액션</h3>
+      <table>
+        <tr><th>상태</th><th>관리자 액션</th><th>상세 설명</th></tr>
+        <tr>
+          <td><span class="status-badge badge-wait">대기 (wait)</span></td>
+          <td>할인 조건 입력 → 전송</td>
+          <td>월할인율 입력 → 할인액/입금액 자동 계산. 분할배서 설정 가능 (1~5장). 확인 팝업 후 전송.</td>
+        </tr>
+        <tr>
+          <td><span class="status-badge badge-select">선택 (select)</span></td>
+          <td>신청자 응답 대기</td>
+          <td>신청자가 조건을 확인하고 진행/취소를 선택할 때까지 대기</td>
+        </tr>
+        <tr>
+          <td><span class="status-badge badge-input">입력 (input)</span></td>
+          <td>신청자 계좌 입력 대기</td>
+          <td>신청자가 계좌정보와 첨부파일을 제출할 때까지 대기</td>
+        </tr>
+        <tr>
+          <td><span class="status-badge badge-endorse">배서 (endorse)</span></td>
+          <td>배서 완료 확인 대기</td>
+          <td>신청자가 배서를 완료할 때까지 대기</td>
+        </tr>
+        <tr>
+          <td><span class="status-badge badge-done">배서완료</span></td>
+          <td><strong>입금일 입력 → 입금완료</strong> 버튼</td>
+          <td>실제 입금 후 입금일을 입력하고 완료 처리. 상태가 done으로 변경됨.</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- B3 -->
+    <div class="section" id="b3">
+      <span class="section-label admin">관리자</span>
+      <h2>B3. 할인 조건 입력 상세</h2>
+      <p>대기(wait) 상태의 건을 클릭하면 할인 조건을 입력할 수 있습니다.</p>
+
+      <h3>입력 항목</h3>
+      <table>
+        <tr><th>항목</th><th>설명</th></tr>
+        <tr><td>월 할인율 (%)</td><td>수수료율 입력 → 할인액과 입금액 자동 계산</td></tr>
+        <tr><td>분할배서</td><td>미선택 / 2~5장 선택. 선택 시 각 장별 금액 입력 (합계 = 어음금액 일치 필수)</td></tr>
+      </table>
+
+      <h3>계산식</h3>
+      <div class="formula">
+        <strong>사용일수</strong> = 만기일(익영업일) − 입금예정일 + 1<br>
+        <span style="color:#e65100;">※ 사용일수가 30일 미만인 경우 최소 30일 기준으로 계산됩니다.</span><br><br>
+        <strong>할인수수료</strong> = 어음금액 × (월할인율 / 100) / 30 × 사용일수 + 1,500원<br><br>
+        분할배서 시: 추가 장수 × 1,500원 가산<br>
+        <span style="color:#78909c;">(예: 3장 → 2장 × 1,500 = 3,000원 추가)</span><br><br>
+        <strong>입금액</strong> = 어음금액 − 할인수수료
+      </div>
+
+      <p>조건 입력 후 <strong>확인 팝업</strong>에서 내용을 검토한 뒤 전송합니다.</p>
+    </div>
+
+    <!-- B4 -->
+    <div class="section" id="b4">
+      <span class="section-label admin">관리자</span>
+      <h2>B4. 입금 완료 처리</h2>
+      <p>신청자가 배서를 완료한 건은 관리자 대시보드에 "배서완료" 상태로 표시됩니다.</p>
+      <ul>
+        <li>실제 입금을 진행한 후 상세 모달에서 <strong>입금일</strong>을 입력하고 <strong>입금완료</strong> 버튼을 클릭합니다.</li>
+        <li>입금 완료 시 신청자는 대시보드에서 할인내역서를 확인할 수 있게 됩니다.</li>
+      </ul>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 참고 사항 -->
+    <div class="section" id="ref">
+      <span class="section-label info">참고</span>
+      <h2>참고 사항</h2>
+
+      <h3>자동 기능</h3>
+      <ul>
+        <li><strong>10초 자동 갱신</strong>: 신청자/관리자 대시보드 모두 10초 간격으로 데이터 자동 업데이트</li>
+        <li><strong>공휴일 반영</strong>: 만기일이 주말/공휴일인 경우 익영업일로 자동 조정 (2024~2027년 한국 공휴일 내장)</li>
+        <li><strong>사업자번호 자동완성</strong>: 반복 신청 시 수취사/발행사 정보 자동 입력</li>
+      </ul>
+
+      <h3>데이터 보안</h3>
+      <ul>
+        <li><strong>신청자</strong>: 사업자번호로만 본인 데이터 조회 (타인 데이터 접근 불가)</li>
+        <li><strong>관리자</strong>: URL 비공개 + PIN 인증 이중 보안</li>
+      </ul>
+
+      <h3>문의</h3>
+      <ul>
+        <li>연락처: <strong>02-785-7080</strong></li>
+        <li>시스템 관련 문의: <strong>276홀딩스</strong></li>
+      </ul>
+    </div>
+
+  </div><!-- .content -->
+
+  <div class="footer">
+    <strong>(주)플로우파트너스</strong> · 전자어음 할인 시스템 사용 가이드 · 2026.04
+  </div>
+
+</div><!-- .container -->
+
+</body>
+</html>

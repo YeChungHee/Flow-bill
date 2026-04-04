@@ -345,6 +345,7 @@ function calcDays(){
 
 // ===== 할인액 계산 =====
 function calcDiscount(amount,monthlyRate,usageDays){
+  usageDays = Math.max(usageDays, 30);
   var fee=Math.round(amount*(monthlyRate/100)/30*usageDays)+1500;
   return fee;
 }

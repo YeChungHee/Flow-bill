@@ -415,6 +415,7 @@ function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;re
 function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
 function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function calcDiscount(amount,rate,days,splitCount){
+  days = Math.max(days, 30);
   var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
   var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
   return baseFee + extraSplit;
@@ -722,11 +723,15 @@ function baseInfoHTML(iq){
 // ===== 할인 결과 HTML =====
 function discountHTML(iq){
   if(!iq.rate) return '';
+  var days = iq.usageDays||0;
+  var displayDays = Math.max(days, 30);
+  var minNotice = (days < 30) ? '<div style="margin-top:10px;padding:8px 12px;background:#fff8e1;border:1.5px solid #ffe0b2;border-radius:8px;font-size:0.65rem;color:#e65100;line-height:1.5">[안내] 전자어음 할인시 적용되는 \'사용일수\'는 \'30일 미만\'시에도 최소 \'30일\' 기준으로 계산됩니다.</div>' : '';
   return '<div class="result-panel"><h3>할인 조건</h3>'
-    +'<div class="result-row"><span class="result-lbl">사용일수</span><span class="result-val">'+(iq.usageDays||0)+'일</span></div>'
-    +'<div class="result-row"><span class="result-lbl">월할인율</span><span class="result-val">'+iq.rate+'%</span></div>'
-    +'<div class="result-row"><span class="result-lbl">할인액 (수수료 포함)</span><span class="result-val fee">\u20a9'+fmt(iq.fee)+'원</span></div>'
     +'<div class="result-row"><span class="result-lbl">입금액</span><span class="result-val net">\u20a9'+fmt(iq.net)+'원</span></div>'
+    +'<div class="result-row"><span class="result-lbl">할인액 (수수료 포함)</span><span class="result-val fee">\u20a9'+fmt(iq.fee)+'원</span></div>'
+    +'<div class="result-row"><span class="result-lbl">월할인율</span><span class="result-val">'+iq.rate+'%</span></div>'
+    +'<div class="result-row"><span class="result-lbl">사용일수</span><span class="result-val">'+displayDays+'일</span></div>'
+    +minNotice
     +'</div>';
 }
 
