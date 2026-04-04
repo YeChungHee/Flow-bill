@@ -66,6 +66,8 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
+.load-more-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px auto 0;padding:8px 24px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;font-size:0.78rem;color:#555;cursor:pointer;transition:background 0.2s}
+.load-more-btn:hover{background:#e8e8e8}
 /* 계좌확인 팝업 */
 .account-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3500;justify-content:center;align-items:center;padding:16px}
 .account-overlay.show{display:flex}
@@ -307,9 +309,9 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
     <!-- 필터 바 -->
     <div class="filter-bar">
-      <input type="text" id="filterText" placeholder="발행사 검색" oninput="renderList()">
+      <input type="text" id="filterText" placeholder="발행사 검색" oninput="currentPage=1;renderList()">
       <div class="filter-row">
-        <select id="filterStatus" onchange="renderList()">
+        <select id="filterStatus" onchange="currentPage=1;renderList()">
           <option value="all">전체</option>
           <option value="wait">조건대기</option>
           <option value="select">조건선택</option>
@@ -319,16 +321,16 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
           <option value="done">입금완료</option>
           <option value="cancel">취소</option>
         </select>
-        <select id="filterDateType" onchange="toggleDateRange();renderList()">
+        <select id="filterDateType" onchange="toggleDateRange();currentPage=1;renderList()">
           <option value="none">날짜검색</option>
           <option value="start">입금예정일</option>
           <option value="due">만기일</option>
         </select>
       </div>
       <div class="date-group" id="dateRange" style="display:none">
-        <input type="date" id="dateFrom" onchange="renderList()">
+        <input type="date" id="dateFrom" onchange="currentPage=1;renderList()">
         <span class="date-sep">~</span>
-        <input type="date" id="dateTo" onchange="renderList()">
+        <input type="date" id="dateTo" onchange="currentPage=1;renderList()">
       </div>
     </div>
 
@@ -338,6 +340,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
     </div>
     <div id="listBody" class="list-desktop"></div>
     <div id="listMobile" class="list-mobile"></div>
+    <div id="loadMoreWrap" style="display:none"></div>
 
     <div style="text-align:center;margin-top:16px"><a href="#" onclick="doLogout();return false" style="color:#999;font-size:0.78rem;text-decoration:underline">다른 사업자번호로 조회</a></div>
     <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
@@ -536,6 +539,8 @@ function loadAll(){
 }
 
 var currentIdx = -1;
+var PAGE_SIZE = 30;
+var currentPage = 1;
 
 // ===== 날짜 필터 토글 =====
 function toggleDateRange(){
@@ -589,6 +594,7 @@ function clearAllFilters(){
   if($('dateFrom'))$('dateFrom').value='';
   if($('dateTo'))$('dateTo').value='';
   $('dateRange').style.display='none';
+  currentPage=1;
   renderDashboard();
   renderList();
 }
@@ -641,13 +647,16 @@ function renderList(){
   renderDashboard();
   allBills.forEach(function(x,i){x._idx=i;});
   var filtered = getFiltered();
+  var showCount = currentPage * PAGE_SIZE;
+  var visible = filtered.slice(0, showCount);
+  var remaining = filtered.length - visible.length;
   var emptyMsg = allBills.length?'조건에 맞는 내역이 없습니다.':'신청 내역이 없습니다.';
 
-  // 데스크톱 리스트 (8컬럼 그리드)
+  // 데스크톱 리스트 (7컬럼 그리드)
   var el=$('listBody');
   if(!filtered.length){el.innerHTML='<div class="empty-msg">'+emptyMsg+'</div>';}
   else{
-    el.innerHTML=filtered.map(function(iq,i){
+    el.innerHTML=visible.map(function(iq,i){
       var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
       var startDt=fixDate(iq.startDate)||'-';
       var rateStr=iq.rate?(iq.rate+'%'):'-';
@@ -668,7 +677,7 @@ function renderList(){
   if(!mEl) return;
   if(!filtered.length){mEl.innerHTML='<div class="empty-msg">'+emptyMsg+'</div>';}
   else{
-    mEl.innerHTML=filtered.map(function(iq){
+    mEl.innerHTML=visible.map(function(iq){
       var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
       var startDt2=fixDate(iq.startDate)||'-';
       var rateStr=iq.rate?(iq.rate+'%'):'미입력';
@@ -688,6 +697,20 @@ function renderList(){
         +'</div>';
     }).join('');
   }
+
+  // 더보기 버튼
+  var lmWrap=$('loadMoreWrap');
+  if(remaining>0){
+    lmWrap.style.display='block';
+    lmWrap.innerHTML='<button class="load-more-btn" onclick="loadMore()">+ '+remaining+'건 더보기</button>';
+  } else {
+    lmWrap.style.display='none';
+    lmWrap.innerHTML='';
+  }
+}
+function loadMore(){
+  currentPage++;
+  renderList();
 }
 
 // ===== 상태 진행바 HTML =====
