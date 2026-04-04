@@ -13,11 +13,11 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
 
 /* 대시보드 요약 카드 */
-.dash{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
 .dash-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 5px rgba(0,0,0,0.06)}
 .dash-card .num{font-size:1.6rem;font-weight:800;line-height:1.2}
 .dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
-.c-total{color:#1565c0}.c-prog{color:#e65100}.c-done{color:#2e7d32}
+.c-total{color:#1565c0}.c-prog{color:#e65100}.c-cancel{color:#c62828}.c-done{color:#2e7d32}
 
 /* 필터 바 */
 .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
@@ -35,12 +35,11 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
 /* 리스트 — 데스크톱 8컬럼 */
 .list-title{font-size:0.92rem;color:#555;font-weight:700;margin-bottom:10px;padding-left:4px}
-.list-header{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
-.list-item{display:grid;grid-template-columns:34px 62px 68px 1fr 1fr 100px 58px 72px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
+.list-header{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
+.list-item{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
 .list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
 .list-item .no{color:#999;font-size:0.7rem}
-.list-item .company{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.list-item .issuer{color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item .issuer{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.76rem}
 .list-item .rate{font-size:0.76rem;color:#e65100;text-align:center;font-weight:700}
 .list-item .date{font-size:0.72rem;color:#666;text-align:center}
@@ -233,7 +232,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   .wrap{padding:10px}
   h1{font-size:1.1rem;padding:12px 0 4px}
   .subtitle{font-size:0.72rem}
-  .dash{grid-template-columns:repeat(3,1fr);gap:6px}
+  .dash{grid-template-columns:repeat(4,1fr);gap:4px}
   .dash-card{padding:10px 6px}
   .dash-card .num{font-size:1.2rem}
   .dash-card .label{font-size:0.65rem}
@@ -302,6 +301,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
     <div class="dash">
       <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체 신청</div></div>
       <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="label">진행중</div></div>
+      <div class="dash-card"><div class="num c-cancel" id="dCancel">0</div><div class="label">취소</div></div>
       <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">완료</div></div>
     </div>
 
@@ -334,7 +334,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
     <div class="list-title">신청 이력</div>
     <div class="list-header">
-      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>수취사</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
+      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
     </div>
     <div id="listBody" class="list-desktop"></div>
     <div id="listMobile" class="list-mobile"></div>
@@ -604,9 +604,11 @@ function badgeClass(s){
 function renderDashboard(){
   var data = isFilterActive() ? getFiltered() : allBills;
   var prog = data.filter(function(x){return x.status!=='done'&&x.status!=='cancel'}).length;
-  var done = data.filter(function(x){return x.status==='done'}).length;
+  var cancel = data.filter(function(x){return x.status==='cancel'}).length;
+  var done = data.length - prog - cancel;
   $('dTotal').textContent = data.length;
   $('dProg').textContent = prog;
+  $('dCancel').textContent = cancel;
   $('dDone').textContent = done;
 
   // 필터 표시기
@@ -652,7 +654,6 @@ function renderList(){
         +'<span class="no">'+(filtered.length-i)+'</span>'
         +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
         +'<span class="date">'+shortDate(startDt)+'</span>'
-        +'<span class="company">'+(iq.applyName||'-')+'</span>'
         +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
         +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
         +'<span class="rate">'+rateStr+'</span>'
@@ -672,7 +673,7 @@ function renderList(){
       var rateStr=iq.rate?(iq.rate+'%'):'미입력';
       return '<div class="m-card" onclick="openModal('+iq._idx+')">'
         +'<div class="m-row1">'
-          +'<span class="m-companies">'+(iq.applyName||'-')+'<span class="arr">\u2192</span>'+(iq.issuerName||'-')+'</span>'
+          +'<span class="m-companies">'+(iq.issuerName||'-')+'</span>'
           +'<span class="badge '+bc+'">'+st+'</span>'
         +'</div>'
         +'<div class="m-row2">'
@@ -1282,7 +1283,7 @@ function startAutoRefresh(){
       renderDashboard();
       renderList();
     });
-  }, 30000);
+  }, 10000);
 }
 function stopAutoRefresh(){
   if(autoRefreshTimer){ clearInterval(autoRefreshTimer); autoRefreshTimer=null; }
