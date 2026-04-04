@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+body{font-family:'Noto Sans KR',Arial,sans-serif;background:#fff;margin:0;padding:30px 40px;}
+.title{text-align:center;font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px;}
+.subtitle{text-align:center;font-size:12px;color:#888;margin-bottom:30px;}
+.flow{display:flex;align-items:flex-start;justify-content:center;gap:0;}
+.col{display:flex;flex-direction:column;align-items:center;gap:0;width:140px;}
+.col-label{font-size:11px;font-weight:700;color:#fff;padding:6px 16px;border-radius:20px;margin-bottom:16px;}
+.col-user .col-label{background:#1565c0;}
+.col-admin .col-label{background:#e65100;}
+.step{width:130px;padding:10px 8px;border-radius:10px;text-align:center;font-size:10px;line-height:1.4;font-weight:600;position:relative;}
+.step-user{background:#e3f2fd;color:#1565c0;border:1.5px solid #90caf9;}
+.step-admin{background:#fff3e0;color:#e65100;border:1.5px solid #ffcc80;}
+.step-done{background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;}
+.step-num{position:absolute;top:-8px;left:-8px;width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;}
+.step-user .step-num{background:#1565c0;}
+.step-admin .step-num{background:#e65100;}
+.step-done .step-num{background:#2e7d32;}
+.arrow{display:flex;align-items:center;justify-content:center;padding:6px 0;color:#bbb;font-size:16px;}
+.arrow-h{display:flex;align-items:center;justify-content:center;padding:0 4px;color:#bbb;font-size:16px;align-self:center;margin-top:20px;}
+.status{font-size:8px;color:#999;margin-top:2px;font-weight:400;}
+.spacer{height:44px;}
+.legend{display:flex;gap:20px;justify-content:center;margin-top:24px;font-size:10px;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:12px;height:12px;border-radius:3px;}
+</style></head>
+<body>
+<div class="title">전자어음 할인 문의 — 업무 프로세스</div>
+<div class="subtitle">신청자(고객사) ↔ 관리자(플로우파트너스) 간 7단계 워크플로우</div>
+
+<div class="flow">
+  <!-- 신청자 Column -->
+  <div class="col col-user">
+    <div class="col-label">👤 신청자</div>
+    <div class="step step-user"><div class="step-num">1</div>할인 문의 접수<div class="status">inquiry.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="step step-user"><div class="step-num">4</div>할인 조건 확인<br>진행 / 취소<div class="status">dashboard.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="step step-user"><div class="step-num">5</div>입금 계좌 입력<br>첨부파일 제출<div class="status">dashboard.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="step step-user"><div class="step-num">6</div>배서 완료 확인<div class="status">dashboard.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="step step-done"><div class="step-num">✓</div>할인내역서<br>확인 및 저장<div class="status">discount-statement.html</div></div>
+  </div>
+
+  <!-- 화살표 Column -->
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:50px;gap:0;width:50px;">
+    <div style="height:40px;"></div>
+    <div style="color:#bbb;font-size:10px;">→</div>
+    <div style="height:97px;"></div>
+    <div style="color:#bbb;font-size:10px;">←</div>
+    <div style="height:190px;"></div>
+    <div style="color:#bbb;font-size:10px;">→</div>
+    <div style="height:40px;"></div>
+    <div style="color:#bbb;font-size:10px;">→</div>
+  </div>
+
+  <!-- 관리자 Column -->
+  <div class="col col-admin">
+    <div class="col-label">🛡 관리자</div>
+    <div class="spacer"></div>
+    <div class="arrow" style="color:transparent;">↓</div>
+    <div class="step step-admin"><div class="step-num">2</div>신규 문의 확인<br>검토<div class="status">admin.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="step step-admin"><div class="step-num">3</div>할인 조건 입력<br>할인율 · 수수료<div class="status">admin.html</div></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="spacer"></div>
+    <div class="arrow">↓</div>
+    <div class="step step-admin"><div class="step-num">7</div>입금 완료 처리<div class="status">admin.html</div></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#e3f2fd;border:1px solid #90caf9;"></div>신청자 액션</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fff3e0;border:1px solid #ffcc80;"></div>관리자 액션</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e8f5e9;border:1px solid #a5d6a7;"></div>완료</div>
+</div>
+</body></html>

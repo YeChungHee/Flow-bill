@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전자어음 할인 — 신청자 사용 가이드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#f5f7fa;color:#1a1a2e;line-height:1.75;font-size:14px;
+}
+
+@media print{
+  body{background:#fff;font-size:11px;}
+  .wrap{max-width:100%;box-shadow:none;}
+  .hero{padding:24px 20px!important;}
+  .step-card{break-inside:avoid;}
+  a{color:#1a1a2e;text-decoration:none;}
+  .btn-link{display:none;}
+}
+
+.wrap{max-width:780px;margin:0 auto;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.06);}
+
+/* Hero */
+.hero{
+  background:linear-gradient(135deg,#1565c0 0%,#0d47a1 100%);
+  color:#fff;padding:44px 44px 36px;position:relative;overflow:hidden;
+}
+.hero::after{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.05);}
+.hero h1{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+.hero p{font-size:13px;opacity:.85;font-weight:300;}
+.hero .ver{display:inline-block;margin-top:12px;padding:3px 12px;border-radius:16px;background:rgba(255,255,255,.14);font-size:11px;}
+
+/* Quick Access */
+.quick-bar{
+  display:flex;gap:0;border-bottom:1px solid #e8ecf1;
+}
+.quick-bar a{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:14px 0;font-size:13px;font-weight:600;color:#1565c0;text-decoration:none;
+  transition:background .2s;
+}
+.quick-bar a:hover{background:#e3f2fd;}
+.quick-bar a+a{border-left:1px solid #e8ecf1;}
+.quick-bar .ico{font-size:16px;}
+
+/* Content */
+.content{padding:36px 44px 56px;}
+
+/* Flow Visual */
+.flow-visual{
+  display:flex;align-items:stretch;gap:0;margin:0 0 32px;
+  background:#f8f9fb;border-radius:12px;overflow:hidden;border:1px solid #e8ecf1;
+}
+.fv-step{
+  flex:1;padding:18px 10px;text-align:center;position:relative;
+}
+.fv-step+.fv-step::before{
+  content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:#e0e0e0;
+}
+.fv-num{
+  width:28px;height:28px;border-radius:50%;background:#1565c0;color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;margin-bottom:6px;
+}
+.fv-num.you{background:#1565c0;}
+.fv-num.mgr{background:#bdbdbd;}
+.fv-label{font-size:11px;font-weight:500;color:#455a64;line-height:1.4;}
+.fv-role{font-size:9px;font-weight:600;color:#90a4ae;margin-top:3px;}
+.fv-role.you{color:#1565c0;}
+
+/* Step Card */
+.step-card{
+  border:1px solid #e8ecf1;border-radius:12px;margin-bottom:28px;overflow:hidden;
+}
+.step-header{
+  display:flex;align-items:center;gap:12px;padding:16px 22px;
+  background:#f8f9fb;border-bottom:1px solid #e8ecf1;
+}
+.step-num{
+  width:32px;height:32px;border-radius:8px;background:#1565c0;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;flex-shrink:0;
+}
+.step-title{font-size:16px;font-weight:700;color:#1a1a2e;}
+.step-status{
+  margin-left:auto;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;
+}
+.s-wait{background:#fff3e0;color:#e65100;}
+.s-select{background:#e3f2fd;color:#1565c0;}
+.s-input{background:#f3e5f5;color:#7b1fa2;}
+.s-endorse{background:#e0f2f1;color:#00695c;}
+.s-done{background:#e8f5e9;color:#2e7d32;}
+
+.step-body{padding:20px 22px;}
+.step-body p{margin-bottom:10px;color:#455a64;font-size:13.5px;}
+
+/* How-to list */
+.how-to{counter-reset:howto;margin:12px 0 16px;padding:0;list-style:none;}
+.how-to li{
+  counter-increment:howto;position:relative;padding:10px 0 10px 36px;
+  border-bottom:1px solid #f0f0f0;font-size:13px;color:#455a64;
+}
+.how-to li:last-child{border-bottom:none;}
+.how-to li::before{
+  content:counter(howto);position:absolute;left:0;top:10px;
+  width:24px;height:24px;border-radius:50%;background:#e3f2fd;color:#1565c0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+}
+.how-to li strong{color:#1a1a2e;}
+
+/* Table */
+table{width:100%;border-collapse:collapse;margin:12px 0 16px;font-size:13px;}
+th{background:#f5f7fa;font-weight:600;color:#37474f;text-align:left;padding:9px 14px;border-bottom:2px solid #e0e0e0;font-size:12px;}
+td{padding:8px 14px;border-bottom:1px solid #eee;color:#455a64;vertical-align:top;}
+tr:hover td{background:#fafbfc;}
+
+/* Tip */
+.tip{
+  display:flex;align-items:flex-start;gap:10px;
+  background:#fffde7;border-left:3px solid #fbc02d;
+  padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:12.5px;color:#5d4037;
+}
+.tip .ico{font-size:16px;flex-shrink:0;margin-top:1px;}
+.tip strong{color:#e65100;}
+
+/* Info */
+.info-box{
+  background:#e3f2fd;border-radius:10px;padding:16px 20px;margin:14px 0;
+}
+.info-box h4{font-size:13px;font-weight:600;color:#1565c0;margin-bottom:4px;}
+.info-box p{font-size:12.5px;color:#37474f;margin:0;}
+
+/* Button Link */
+.btn-link{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 18px;border-radius:8px;background:#1565c0;color:#fff;
+  text-decoration:none;font-size:12px;font-weight:600;margin-top:8px;transition:background .2s;
+}
+.btn-link:hover{background:#0d47a1;}
+
+/* Status mini */
+.st{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+
+/* Divider */
+.divider{height:1px;background:linear-gradient(90deg,transparent,#e0e0e0,transparent);margin:32px 0;}
+
+/* Section Title */
+h2{font-size:17px;font-weight:700;color:#1a1a2e;margin:28px 0 10px;padding-bottom:8px;border-bottom:2px solid #e8ecf1;}
+h3{font-size:14px;font-weight:600;color:#37474f;margin:16px 0 8px;}
+ul{padding-left:18px;margin:6px 0 12px;}
+li{margin-bottom:4px;color:#455a64;font-size:13px;}
+li strong{color:#37474f;}
+
+/* FAQ */
+.faq{margin:16px 0;}
+.faq-item{border:1px solid #e8ecf1;border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.faq-q{padding:12px 16px;font-size:13px;font-weight:600;color:#1a1a2e;background:#f8f9fb;cursor:pointer;}
+.faq-q::before{content:'Q. ';color:#1565c0;font-weight:700;}
+.faq-a{padding:12px 16px;font-size:12.5px;color:#455a64;border-top:1px solid #e8ecf1;display:none;}
+.faq-a::before{content:'A. ';color:#e65100;font-weight:700;}
+.faq-item.open .faq-a{display:block;}
+
+/* Footer */
+.footer{background:#f5f7fa;padding:20px 44px;text-align:center;font-size:12px;color:#90a4ae;border-top:1px solid #e8ecf1;}
+.footer strong{color:#546e7a;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>전자어음 할인 신청 가이드</h1>
+    <p>플로우파트너스 전자어음 할인 시스템 신청자용 안내서입니다.</p>
+    <span class="ver">v1.0 · 2026.04</span>
+  </div>
+
+  <!-- Quick Access -->
+  <div class="quick-bar">
+    <a href="https://yechunghee.github.io/Flow-bill/inquiry.html" target="_blank">
+      <span class="ico">📝</span> 할인 문의 신청
+    </a>
+    <a href="https://yechunghee.github.io/Flow-bill/dashboard.html" target="_blank">
+      <span class="ico">📊</span> 내 신청현황
+    </a>
+  </div>
+
+  <div class="content">
+
+    <!-- 접속 안내 -->
+    <div class="info-box">
+      <h4>접속 안내</h4>
+      <p>
+        접속 URL: <strong>https://yechunghee.github.io/Flow-bill/</strong><br>
+        인증 방식: <strong>사업자번호 10자리</strong> 입력 (별도 회원가입 없음)
+      </p>
+    </div>
+
+    <!-- 프로세스 플로우 -->
+    <h2>진행 흐름 한눈에 보기</h2>
+    <p style="font-size:13px;color:#78909c;margin-bottom:12px;">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1565c0;vertical-align:middle;"></span> 내가 할 일 &nbsp;&nbsp;
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#bdbdbd;vertical-align:middle;"></span> 관리자가 처리
+    </p>
+
+    <div class="flow-visual">
+      <div class="fv-step">
+        <div class="fv-num you">1</div><br>
+        <div class="fv-label">할인 문의<br>접수</div>
+        <div class="fv-role you">내가 할 일</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num mgr">2</div><br>
+        <div class="fv-label">문의 확인<br>· 검토</div>
+        <div class="fv-role">관리자</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num mgr">3</div><br>
+        <div class="fv-label">할인 조건<br>전달</div>
+        <div class="fv-role">관리자</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num you">4</div><br>
+        <div class="fv-label">조건 확인<br>진행/취소</div>
+        <div class="fv-role you">내가 할 일</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num you">5</div><br>
+        <div class="fv-label">계좌 입력<br>서류 제출</div>
+        <div class="fv-role you">내가 할 일</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num you">6</div><br>
+        <div class="fv-label">배서 완료<br>확인</div>
+        <div class="fv-role you">내가 할 일</div>
+      </div>
+      <div class="fv-step">
+        <div class="fv-num mgr">7</div><br>
+        <div class="fv-label">입금 완료<br>처리</div>
+        <div class="fv-role">관리자</div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 1 ═══ -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">할인 문의 접수</div>
+        <span class="step-status s-wait">대기 → wait</span>
+      </div>
+      <div class="step-body">
+        <p>신청 페이지에 접속하여 어음 할인을 문의합니다.</p>
+        <a href="https://yechunghee.github.io/Flow-bill/inquiry.html" target="_blank" class="btn-link">신청 페이지 열기 →</a>
+
+        <h3>이렇게 진행하세요</h3>
+        <ol class="how-to">
+          <li><strong>사업자번호</strong>를 입력합니다. (000-00-00000 형식)<br><span style="color:#78909c;font-size:12px;">이전에 신청한 적이 있으면 수취사명이 자동으로 표시됩니다.</span></li>
+          <li><strong>수취사명</strong>을 확인하거나 직접 입력합니다.</li>
+          <li><strong>발행사 사업자번호</strong>를 입력합니다.<br><span style="color:#78909c;font-size:12px;">이전 발행사 목록이 있으면 선택할 수 있습니다.</span></li>
+          <li><strong>발행사명</strong>을 확인합니다. (사업자번호 입력 시 자동완성)</li>
+          <li><strong>어음금액</strong>을 숫자로 입력합니다. (콤마 자동 적용)</li>
+          <li><strong>만기일</strong>을 선택합니다.</li>
+          <li><strong>입금예정일</strong>을 확인합니다. (기본값: 오늘)<br><span style="color:#78909c;font-size:12px;">사용일수가 자동 계산됩니다. (공휴일 자동 반영)</span></li>
+          <li><strong>할인 조회 요청</strong> 버튼을 클릭하면 접수 완료!</li>
+        </ol>
+
+        <div class="tip">
+          <span class="ico">💡</span>
+          <div>접수가 완료되면 <strong>대시보드(내 신청현황)</strong>로 자동 이동됩니다. 관리자가 할인 조건을 전달할 때까지 잠시 기다려 주세요.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2: 관리자 처리 안내 ═══ -->
+    <div style="text-align:center;padding:16px 0;color:#bdbdbd;font-size:13px;font-weight:500;">
+      ⏳ 관리자가 문의를 확인하고 할인 조건을 전달합니다
+    </div>
+
+    <!-- ═══ STEP 4 ═══ -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">할인 조건 확인 → 진행 또는 취소</div>
+        <span class="step-status s-select">선택 → select</span>
+      </div>
+      <div class="step-body">
+        <p>관리자가 전달한 할인 조건을 확인하고 진행 여부를 결정합니다.</p>
+        <a href="https://yechunghee.github.io/Flow-bill/dashboard.html" target="_blank" class="btn-link">대시보드 열기 →</a>
+
+        <h3>이렇게 진행하세요</h3>
+        <ol class="how-to">
+          <li><strong>대시보드</strong>에 접속하여 사업자번호로 로그인합니다.</li>
+          <li>상태가 <span class="st s-select">선택</span>인 건을 클릭합니다.</li>
+          <li>상세 모달에서 <strong>할인율, 수수료, 입금예정액</strong>을 확인합니다.</li>
+          <li>조건이 맞으면 <strong>진행요청</strong> 버튼을 클릭합니다.<br><span style="color:#78909c;font-size:12px;">조건이 맞지 않으면 <strong>취소</strong>를 선택할 수 있습니다.</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 5 ═══ -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">입금 계좌 입력 + 서류 제출</div>
+        <span class="step-status s-input">입력 → input</span>
+      </div>
+      <div class="step-body">
+        <p>할인금을 받을 계좌 정보와 필요한 서류를 제출합니다.</p>
+
+        <h3>이렇게 진행하세요</h3>
+        <ol class="how-to">
+          <li>상태가 <span class="st s-input">입력</span>인 건의 상세 모달을 엽니다.</li>
+          <li><strong>입금 계좌정보</strong> (은행명, 계좌번호, 예금주)를 입력합니다.</li>
+          <li>필요한 <strong>첨부파일</strong>을 업로드합니다.</li>
+          <li><strong>저장</strong> 버튼을 클릭하면 제출 완료!</li>
+        </ol>
+
+        <div class="tip">
+          <span class="ico">💡</span>
+          <div>계좌정보를 정확히 입력해 주세요. 입금 오류를 방지할 수 있습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 6 ═══ -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-title">배서 완료 확인</div>
+        <span class="step-status s-endorse">배서 → endorse</span>
+      </div>
+      <div class="step-body">
+        <p>어음 배서 대상 계좌를 확인한 뒤 배서 완료를 알립니다.</p>
+
+        <h3>이렇게 진행하세요</h3>
+        <ol class="how-to">
+          <li>상태가 <span class="st s-endorse">배서</span>인 건의 상세 모달을 엽니다.</li>
+          <li><strong>배서 대상 계좌</strong>를 확인합니다. (분할배서인 경우 각 장별 금액도 확인)</li>
+          <li>실제 어음 배서를 진행합니다.</li>
+          <li>배서가 끝나면 <strong>배서완료</strong> 버튼을 클릭합니다.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ═══ 관리자 입금 처리 ═══ -->
+    <div style="text-align:center;padding:16px 0;color:#bdbdbd;font-size:13px;font-weight:500;">
+      ⏳ 관리자가 입금을 처리합니다
+    </div>
+
+    <!-- ═══ STEP DONE ═══ -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num" style="background:#2e7d32;">✓</div>
+        <div class="step-title">할인내역서 확인 · 다운로드</div>
+        <span class="step-status s-done">완료 → done</span>
+      </div>
+      <div class="step-body">
+        <p>입금이 완료되면 할인내역서를 확인하고 PDF로 저장할 수 있습니다.</p>
+
+        <h3>이렇게 진행하세요</h3>
+        <ol class="how-to">
+          <li>상태가 <span class="st s-done">완료</span>인 건의 상세 모달을 엽니다.</li>
+          <li><strong>할인내역서 보기</strong> 버튼을 클릭합니다.</li>
+          <li>새 탭에서 할인내역서가 열리면 내용(발행사, 금액, 할인율, 수수료, 지급금액)을 확인합니다.</li>
+          <li><strong>다운로드</strong> 버튼을 클릭하면 PDF로 저장됩니다.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 대시보드 상태 요약 -->
+    <h2>대시보드 상태 한눈에 보기</h2>
+    <p style="font-size:13px;color:#455a64;margin-bottom:12px;">대시보드에서 각 건의 상태에 따라 내가 해야 할 일이 달라집니다.</p>
+
+    <table>
+      <tr><th>상태</th><th>의미</th><th>내가 할 일</th></tr>
+      <tr>
+        <td><span class="st s-wait">대기</span></td>
+        <td>관리자 검토 중</td>
+        <td>기다리기 (별도 액션 없음)</td>
+      </tr>
+      <tr>
+        <td><span class="st s-select">선택</span></td>
+        <td>할인 조건이 도착함</td>
+        <td>조건 확인 → <strong>진행요청</strong> 또는 <strong>취소</strong></td>
+      </tr>
+      <tr>
+        <td><span class="st s-input">입력</span></td>
+        <td>계좌 정보 입력 필요</td>
+        <td>계좌정보 + 첨부파일 제출 → <strong>저장</strong></td>
+      </tr>
+      <tr>
+        <td><span class="st s-endorse">배서</span></td>
+        <td>어음 배서 진행 필요</td>
+        <td>배서 대상 확인 → <strong>배서완료</strong> 클릭</td>
+      </tr>
+      <tr>
+        <td><span class="st s-done">완료</span></td>
+        <td>입금 완료됨</td>
+        <td><strong>할인내역서 보기</strong> → PDF 다운로드</td>
+      </tr>
+    </table>
+
+    <div class="divider"></div>
+
+    <!-- 자주 묻는 질문 -->
+    <h2>자주 묻는 질문</h2>
+    <div class="faq">
+      <div class="faq-item open">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">회원가입이 필요한가요?</div>
+        <div class="faq-a">별도 회원가입은 필요 없습니다. 사업자번호 10자리만 입력하면 바로 이용할 수 있습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">이전에 신청한 정보를 다시 입력해야 하나요?</div>
+        <div class="faq-a">아닙니다. 사업자번호를 입력하면 이전 신청 내역에서 수취사명과 발행사 목록이 자동으로 표시됩니다. 반복 신청 시 입력 시간을 줄일 수 있습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">만기일이 공휴일이면 어떻게 되나요?</div>
+        <div class="faq-a">시스템이 자동으로 익영업일로 조정합니다. 2024~2027년 한국 공휴일이 내장되어 있어 별도 확인이 필요 없습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">대시보드 데이터는 실시간으로 업데이트되나요?</div>
+        <div class="faq-a">30초 간격으로 자동 갱신됩니다. 관리자가 할인 조건을 전달하면 잠시 후 대시보드에 반영됩니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">다른 업체의 신청 내역도 볼 수 있나요?</div>
+        <div class="faq-a">아닙니다. 본인의 사업자번호로 신청한 건만 조회할 수 있습니다. 타인의 데이터에는 접근할 수 없습니다.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">할인내역서는 어떻게 저장하나요?</div>
+        <div class="faq-a">완료 상태의 건에서 '할인내역서 보기'를 클릭한 뒤 '다운로드' 버튼을 누르면 브라우저 인쇄 기능을 통해 PDF로 저장됩니다.</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 문의 -->
+    <div class="info-box" style="text-align:center;">
+      <h4>문의</h4>
+      <p>전화: <strong>02-785-7080</strong> &nbsp;|&nbsp; 시스템 문의: <strong>276홀딩스</strong></p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <strong>(주)플로우파트너스</strong> · 전자어음 할인 신청자 가이드 · 2026.04
+  </div>
+
+</div>
+
+</body>
+</html>
