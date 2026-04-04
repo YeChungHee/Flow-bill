@@ -357,6 +357,20 @@ function formatBizNo(el){
   if(v.length>3){f=v.substring(0,3)+'-';if(v.length>5){f+=v.substring(3,5)+'-'+v.substring(5)}else{f+=v.substring(3)}}else{f=v}
   el.value=f;
 }
+function formatBizStr(v){
+  v=v.replace(/[^0-9]/g,'');
+  if(v.length>=10) return v.substring(0,3)+'-'+v.substring(3,5)+'-'+v.substring(5,10);
+  return v;
+}
+function getApplyName(){
+  if(!allBills||!allBills.length) return '';
+  return allBills[allBills.length-1].applyName||'';
+}
+function updateLoginInfo(){
+  var name=getApplyName();
+  var bizFmt=formatBizStr(currentBiz);
+  $('loginInfo').innerHTML=name?'<strong>'+name+'</strong>&nbsp;&nbsp;'+bizFmt:'<strong>'+bizFmt+'</strong>';
+}
 
 // ===== Global State =====
 var allBills = [];
@@ -382,7 +396,7 @@ function doLogin(){
     }
     $('loginScreen').style.display = 'none';
     $('dashScreen').style.display = 'block';
-    $('loginInfo').innerHTML = '사업자번호: <strong>'+currentBiz+'</strong>';
+    updateLoginInfo();
     renderDashboard();
     renderList();
     startAutoRefresh();
@@ -1097,7 +1111,7 @@ function stopAutoRefresh(){
     loadAll().then(function(){
       $('loginScreen').style.display = 'none';
       $('dashScreen').style.display = 'block';
-      $('loginInfo').innerHTML = '사업자번호: <strong>'+currentBiz+'</strong>';
+      updateLoginInfo();
       renderDashboard();
       renderList();
       startAutoRefresh();
