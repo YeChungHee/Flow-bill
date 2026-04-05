@@ -265,6 +265,46 @@ tr:hover td { background:#fafbfc; }
 ul { padding-left:20px; margin:8px 0 14px; }
 li { margin-bottom:5px; color:#455a64; font-size:13px; }
 li strong { color:#37474f; }
+
+/* ── 모바일 반응형 ── */
+@media(max-width:640px){
+  body { font-size:13px; }
+  .hero { padding:28px 20px 24px; }
+  .hero h1 { font-size:20px; }
+  .hero p { font-size:12px; }
+  .nav-toc { padding:12px 16px; gap:4px; }
+  .nav-toc a { padding:4px 10px; font-size:11px; }
+  .content { padding:24px 16px 40px; }
+  .section { margin-bottom:32px; }
+  h2 { font-size:17px; }
+  h3 { font-size:14px; }
+  p, li { font-size:12px; }
+  .info-grid { grid-template-columns:1fr; gap:10px; }
+  .info-card { padding:14px; }
+  .info-card p { font-size:11px; word-break:break-all; }
+  .process-flow { gap:0; justify-content:flex-start; }
+  .pf-step { width:70px; }
+  .pf-num { width:28px; height:28px; font-size:11px; }
+  .pf-text { font-size:10px; }
+  .pf-arrow { font-size:14px; padding:0 1px; }
+  table { display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch; }
+  th { padding:8px 10px; font-size:11px; }
+  td { padding:7px 10px; font-size:11px; }
+  .formula { padding:12px 14px; font-size:12px; }
+  .tip { padding:10px 12px; font-size:12px; }
+  .footer { padding:18px 16px; font-size:11px; }
+}
+@media(max-width:380px){
+  .hero { padding:22px 14px 20px; }
+  .hero h1 { font-size:18px; }
+  .content { padding:18px 12px 30px; }
+  .nav-toc { padding:10px 12px; }
+  .process-flow { justify-content:center; }
+  .pf-step { width:60px; }
+  .pf-num { width:24px; height:24px; font-size:10px; }
+  .pf-text { font-size:9px; }
+  .pf-arrow { font-size:12px; }
+}
 </style>
 </head>
 <body>
