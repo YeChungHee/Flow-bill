@@ -586,7 +586,10 @@ function saveNewPin(){
   $('btnSavePin').disabled = true;
   $('btnSavePin').style.opacity = '0.5';
   $('btnSavePin').textContent = '저장 중...';
-  fetch(API_URL + '?action=updatePin&applyBiz=' + encodeURIComponent(currentBiz) + '&pinNo=' + encodeURIComponent(newPin), {
+  fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({action:'updatePin', applyBiz:currentBiz, pinNo:newPin}),
     redirect: 'follow'
   })
   .then(function(r){return r.json();})
