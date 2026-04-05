@@ -3,573 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>전자어음 할인 - 내 신청현황</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f0f2f5;color:#333;line-height:1.5;font-size:12px}
-.wrap{max-width:600px;margin:0 auto;padding:16px}
-h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
-.subtitle{text-align:center;color:#888;font-size:0.78rem;margin-bottom:6px}
-.bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
-
-/* 대시보드 요약 카드 */
-.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-.dash-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 5px rgba(0,0,0,0.06)}
-.dash-card .num{font-size:1.6rem;font-weight:800;line-height:1.2}
-.dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
-.c-total{color:#1565c0}.c-prog{color:#e65100}.c-cancel{color:#c62828}.c-done{color:#2e7d32}
-
-/* 필터 바 */
-.filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.filter-bar input,.filter-bar select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.82rem;outline:none}
-.filter-bar input:focus,.filter-bar select:focus{border-color:#1565c0}
-.filter-bar input[type="text"]{flex:1;min-width:120px}
-.filter-bar input[type="date"]{width:130px}
-.filter-bar .filter-row{display:flex;gap:6px}
-.filter-bar .date-group{display:flex;align-items:center;gap:4px}
-.filter-bar .date-sep{font-size:0.7rem;color:#bbb}
-
-/* 신청 버튼 */
-.btn-new{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3);margin-bottom:18px;transition:all 0.2s}
-.btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
-
-/* 리스트 — 데스크톱 8컬럼 */
-.list-title{font-size:0.92rem;color:#555;font-weight:700;margin-bottom:10px;padding-left:4px}
-.list-header{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
-.list-item{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
-.list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
-.list-item .no{color:#999;font-size:0.7rem}
-.list-item .issuer{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.76rem}
-.list-item .rate{font-size:0.76rem;color:#e65100;text-align:center;font-weight:700}
-.list-item .date{font-size:0.72rem;color:#666;text-align:center}
-
-/* 모바일 카드 뷰 */
-.list-mobile{display:none}
-.m-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:0 1px 6px rgba(0,0,0,0.06);cursor:pointer;transition:all .15s}
-.m-card:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12)}
-.m-row1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.m-companies{font-weight:700;font-size:0.82rem;color:#333;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.m-companies .arr{color:#bbb;margin:0 4px;font-weight:400}
-.m-row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.m-amount{font-weight:800;font-size:0.88rem;color:#1565c0}
-.m-rate{font-size:0.74rem;color:#e65100;font-weight:700}
-.m-dates{display:flex;gap:10px;margin-top:6px;font-size:0.68rem;color:#999}
-.m-dates span strong{color:#555;font-weight:600}
-
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.64rem;font-weight:700}
-.badge-wait{background:#fff3e0;color:#e65100}
-.badge-select{background:#e3f2fd;color:#1565c0}
-.badge-input{background:#f3e5f5;color:#7b1fa2}
-.badge-endorse{background:#fff8e1;color:#f57f17}
-.badge-endorsed{background:#e0f2f1;color:#00695c}
-.badge-done{background:#e8f5e9;color:#2e7d32}
-.badge-cancel{background:#ffebee;color:#c62828}
-.empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
-.load-more-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px auto 0;padding:8px 24px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;font-size:0.78rem;color:#555;cursor:pointer;transition:background 0.2s}
-.load-more-btn:hover{background:#e8e8e8}
-/* 계좌확인 팝업 */
-.account-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3500;justify-content:center;align-items:center;padding:16px}
-.account-overlay.show{display:flex}
-.account-box{background:#fff;border-radius:16px;padding:24px;max-width:400px;width:95%;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center}
-.account-box h3{color:#1565c0;font-size:1rem;margin-bottom:16px}
-.account-detail{background:#e3f2fd;border-radius:12px;padding:16px;margin-bottom:16px}
-.account-detail .ad-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.92rem}
-.account-detail .ad-lbl{color:#666}.account-detail .ad-val{font-weight:700;color:#333}
-.account-btn-row{display:flex;gap:10px;margin-top:14px}
-.account-btn-row .btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s}
-.btn-confirm-account{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 4px 12px rgba(46,125,50,0.3)}
-.btn-confirm-account:hover{transform:translateY(-1px)}
-.btn-confirm-account:disabled{opacity:0.6;transform:none;cursor:not-allowed}
-.footer{text-align:center;color:#bbb;font-size:0.72rem;padding:20px 0 30px}
-
-/* 모달 */
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto}
-.modal-overlay.show{display:flex}
-.modal{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:none;margin:40px auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
-.modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;border-bottom:1px solid #eee}
-.modal-header h2{font-size:1rem;color:#1565c0}
-.modal-close{width:32px;height:32px;border:none;background:#f5f5f5;border-radius:50%;font-size:1.1rem;cursor:pointer;color:#888;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{background:#e0e0e0;color:#333}
-.modal-body{padding:20px}
-
-/* 정보 그리드 */
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.info-item{background:#f8f9fa;border-radius:10px;padding:10px 12px}
-.info-item .lbl{font-size:0.72rem;color:#888;font-weight:600;margin-bottom:2px}
-.info-item .val{font-size:0.92rem;font-weight:700;color:#333}
-.info-item .val.hl{color:#1565c0}
-.info-full{grid-column:1/-1}
-.divider{border:none;border-top:2px solid #e3f2fd;margin:8px 0 16px}
-
-/* 할인 결과 패널 */
-.result-panel{background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border-radius:14px;padding:16px;margin-bottom:16px}
-.result-panel h3{font-size:0.88rem;color:#1565c0;margin-bottom:12px}
-.result-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
-.result-row:last-child{border-bottom:none}
-.result-lbl{font-size:0.82rem;color:#666}
-.result-val{font-size:0.95rem;font-weight:700;color:#1565c0}
-.result-val.fee{color:#e65100}
-.result-val.net{color:#2e7d32;font-size:1.05rem}
-
-/* 분할배서 패널 */
-.split-panel{background:#fff8e1;border-radius:12px;padding:14px;margin-bottom:16px;border:1.5px solid #ffe082}
-.split-panel h4{font-size:0.82rem;color:#f57f17;margin-bottom:8px}
-.split-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:0.85rem}
-.split-row .sn{color:#888;font-size:0.78rem;width:40px}
-.split-row .sa{font-weight:700;color:#333}
-
-/* 입력 폼 영역 */
-.form-section{background:#f8f9fa;border-radius:14px;padding:18px;margin-bottom:16px}
-.form-section h3{font-size:0.88rem;color:#1565c0;margin-bottom:14px}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:0.78rem;color:#666;font-weight:600;margin-bottom:4px}
-.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:0.92rem;outline:none;background:#fff;transition:border 0.2s}
-.field input:focus{border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,0.08)}
-.field input[readonly]{background:#f0f0f0;color:#555}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* 첨부파일 */
-.file-area{border:2px dashed #ccc;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border 0.2s;margin-top:4px}
-.file-area:hover{border-color:#1565c0;background:#f8f9ff}
-.file-area .icon{font-size:1.5rem;margin-bottom:4px}
-.file-area .text{font-size:0.78rem;color:#888}
-.file-name{font-size:0.82rem;color:#1565c0;font-weight:600;margin-top:6px}
-.file-input{display:none}
-.file-uploading{color:#f57c00;font-size:0.8rem;margin-top:6px}
-/* 첨부파일 미리보기 */
-.attach-preview{background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-top:8px}
-.attach-preview img{max-width:100%;border-radius:8px;margin-bottom:8px}
-.attach-preview .pdf-icon{font-size:2.5rem;text-align:center;padding:16px 0}
-.attach-preview .file-label{font-size:0.78rem;color:#666;margin-bottom:8px;word-break:break-all}
-.attach-btns{display:flex;gap:8px;margin-top:8px}
-.attach-btns a,.attach-btns button{flex:1;padding:8px 0;border-radius:8px;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none;border:none;cursor:pointer}
-.btn-preview-view{background:#e3f2fd;color:#1565c0}
-.btn-preview-dl{background:#e8f5e9;color:#2e7d32}
-.btn-preview-share{background:#fff3e0;color:#e65100}
-
-/* 배서 계좌 정보 */
-.endorse-panel{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #c8e6c9}
-.endorse-panel h3{font-size:0.88rem;color:#2e7d32;margin-bottom:10px}
-.endorse-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.85rem;border-bottom:1px solid rgba(0,0,0,0.04)}
-.endorse-row:last-child{border-bottom:none}
-.endorse-lbl{color:#666;font-size:0.8rem}
-.endorse-val{font-weight:700;color:#333}
-
-/* 입금 정보 */
-.deposit-panel{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:14px;padding:16px;margin-bottom:16px;border:1.5px solid #90caf9}
-.deposit-panel h3{font-size:0.88rem;color:#1565c0;margin-bottom:8px}
-.deposit-date{font-size:1.1rem;font-weight:800;color:#1565c0;text-align:center;padding:8px 0}
-
-/* 상태 진행바 */
-.progress-bar{display:flex;gap:3px;margin-bottom:18px;padding:0 2px}
-.step{flex:1;text-align:center;padding:7px 0;border-radius:7px;font-size:0.65rem;font-weight:700;background:#f0f0f0;color:#bbb;transition:all 0.3s}
-.step.active{background:#1565c0;color:#fff}
-.step.done{background:#e8f5e9;color:#2e7d32}
-.step.cancel{background:#ffebee;color:#c62828}
-
-/* 버튼 */
-.btn-row{display:flex;gap:10px;margin-top:16px}
-.btn{flex:1;padding:13px;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s}
-.btn-primary{background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3)}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
-.btn-danger{background:linear-gradient(135deg,#c62828,#e53935);color:#fff;box-shadow:0 4px 12px rgba(198,40,40,0.3)}
-.btn-danger:hover{transform:translateY(-1px)}
-.btn-success{background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;box-shadow:0 4px 12px rgba(46,125,50,0.3)}
-.btn-success:hover{transform:translateY(-1px)}
-.btn-secondary{background:#f5f5f5;color:#666}
-.btn-secondary:hover{background:#e0e0e0;color:#333}
-.btn-warn{background:linear-gradient(135deg,#f57f17,#ffa000);color:#fff;box-shadow:0 4px 12px rgba(245,127,23,0.3)}
-.btn-warn:hover{transform:translateY(-1px)}
-
-/* 토스트 */
-.msg-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:600;color:#fff;z-index:2000;display:none}
-.msg-ok{background:#2e7d32}.msg-err{background:#c62828}
-
-/* 사업자번호 진입 화면 */
-.login-card{background:#fff;border-radius:14px;padding:28px 20px;margin-top:10px;box-shadow:0 2px 12px rgba(0,0,0,0.08);text-align:center}
-.login-title{font-size:1rem;color:#1565c0;margin-bottom:6px}
-.login-desc{font-size:0.82rem;color:#888;margin-bottom:20px}
-.login-card .field{text-align:left;margin-bottom:16px}
-.login-card .field input{text-align:center;font-size:1.1rem;font-weight:700;letter-spacing:1px}
-.login-msg{margin-top:12px;font-size:0.82rem;color:#c62828;min-height:20px}
-.login-info{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;padding:8px 14px;background:#e3f2fd;border-radius:8px;font-size:0.82rem;color:#1565c0;font-weight:600}
-.nav-tabs{display:flex;gap:6px;margin-bottom:18px;background:#e8ecf1;border-radius:12px;padding:4px}
-.nav-tab{flex:1;text-align:center;padding:11px 0;font-size:0.85rem;font-weight:700;text-decoration:none;color:#666;border-radius:10px;transition:all 0.25s}
-.nav-tab:hover{background:rgba(255,255,255,0.6);color:#1565c0}
-.nav-tab.active{background:#1565c0;color:#fff;box-shadow:0 2px 8px rgba(21,101,192,0.3)}
-
-/* 수정 모달 */
-.edit-section{background:#fff3e0;border-radius:14px;padding:18px;margin-bottom:16px;border:1.5px solid #ffe0b2}
-.edit-section h3{font-size:0.88rem;color:#e65100;margin-bottom:14px}
-
-/* === 반응형 === */
-/* 데스크톱 (768px+) */
-@media(min-width:768px){
-  .wrap{max-width:720px;padding:24px}
-  h1{font-size:1.5rem;padding:24px 0 8px}
-  .dash{gap:14px}
-  .dash-card{padding:18px}
-  .dash-card .num{font-size:1.8rem}
-  .nav-tabs{margin-bottom:24px;padding:5px}
-  .nav-tab{padding:13px 0;font-size:0.9rem}
-  .modal{max-width:600px}
-  .modal-body{padding:24px}
-  .login-card{padding:36px 28px;max-width:440px;margin:20px auto}
-}
-/* 모바일 (640px 이하) — 리스트 전환 */
-@media(max-width:640px){
-  .list-header{display:none}
-  .list-desktop{display:none}
-  .list-mobile{display:block}
-  .filter-bar{flex-direction:column;gap:6px}
-  .filter-bar input[type="text"]{width:100%;min-width:auto}
-  .filter-bar .filter-row{width:100%}
-  .filter-bar .filter-row select{flex:1}
-  .filter-bar .date-group{width:100%;flex-wrap:wrap}
-  .filter-bar input[type="date"]{flex:1;min-width:0}
-}
-/* 소형 모바일 (380px 이하) */
-@media(max-width:380px){
-  .wrap{padding:10px}
-  h1{font-size:1.1rem;padding:12px 0 4px}
-  .subtitle{font-size:0.72rem}
-  .dash{grid-template-columns:repeat(4,1fr);gap:4px}
-  .dash-card{padding:10px 6px}
-  .dash-card .num{font-size:1.2rem}
-  .dash-card .label{font-size:0.65rem}
-  .nav-tab{padding:9px 0;font-size:0.8rem}
-  .modal{margin:10px auto;border-radius:12px}
-  .modal-body{padding:14px}
-  .modal-header{padding:14px 16px 10px}
-  .info-grid{grid-template-columns:1fr;gap:6px}
-  .info-item{padding:8px 10px}
-  .result-panel{padding:12px}
-  .split-panel{padding:10px}
-  .endorse-panel{padding:12px}
-  .form-section{padding:14px}
-  .row2{grid-template-columns:1fr}
-  .btn-row{flex-direction:column;gap:8px}
-  .btn-row .btn{min-width:auto}
-  .login-card{padding:20px 16px}
-  .login-card .field input{font-size:1rem}
-  .edit-section{padding:14px}
-}
-</style>
-</head>
-<body>
-<div class="wrap">
-
-  <!-- ===== 사업자번호 진입 화면 ===== -->
-  <div id="loginScreen">
-    <h1>내 신청현황</h1>
-    <p class="subtitle">전자어음 할인 문의 · 신청자 대시보드</p>
-    <div class="bar"></div>
-    <div class="nav-tabs">
-      <a class="nav-tab" href="inquiry.html">할인 문의</a>
-      <a class="nav-tab active" href="dashboard.html">내 신청현황</a>
-    </div>
-    <div class="login-card">
-      <h2 class="login-title">사업자번호로 조회</h2>
-      <p class="login-desc">할인 문의 시 입력한 사업자번호를 입력해 주세요.</p>
-      <div class="field">
-        <label>사업자번호</label>
-        <input type="text" id="loginBiz" placeholder="000-00-00000" inputmode="numeric" maxlength="12" oninput="formatBizNo(this)" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div class="field">
-        <label>PIN 번호</label>
-        <input type="password" id="loginPin" placeholder="PIN 번호 입력" inputmode="numeric" maxlength="6" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn-new" onclick="doLogin()" id="btnLogin">조회하기</button>
-      <div class="login-msg" id="loginMsg"></div>
-    </div>
-    <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
-  </div>
-
-  <!-- ===== PIN 변경 팝업 ===== -->
-  <div id="pinPopup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:16px; padding:32px 28px; width:340px; max-width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
-      <h3 style="margin:0 0 8px; font-size:18px; color:#1a1a2e;">PIN 번호 설정</h3>
-      <p style="color:#666; font-size:14px; margin:0 0 24px; line-height:1.5;">보안을 위해 새로운 6자리 PIN 번호를 설정해 주세요.</p>
-      <div class="field" style="margin-bottom:14px;">
-        <label>새 PIN 번호 (6자리)</label>
-        <input type="password" id="newPin1" placeholder="새 PIN 번호 입력" inputmode="numeric" maxlength="6" oninput="checkPinMatch()">
-      </div>
-      <div class="field" style="margin-bottom:14px;">
-        <label>PIN 번호 확인</label>
-        <input type="password" id="newPin2" placeholder="PIN 번호 재입력" inputmode="numeric" maxlength="6" oninput="checkPinMatch()">
-      </div>
-      <div id="pinMatchMsg" style="color:#e74c3c; font-size:13px; margin-bottom:16px; min-height:18px;"></div>
-      <button id="btnSavePin" class="btn-new" onclick="saveNewPin()" disabled style="width:100%; opacity:0.5; cursor:not-allowed;">수정하기</button>
-    </div>
-  </div>
-
-  <!-- ===== 대시보드 (초기 숨김) ===== -->
-  <div id="dashScreen" style="display:none">
-    <h1>내 신청현황</h1>
-    <p class="subtitle">전자어음 할인 문의 · 신청자 대시보드</p>
-    <div class="bar"></div>
-    <div class="nav-tabs">
-      <a class="nav-tab" href="inquiry.html">할인 문의</a>
-      <a class="nav-tab active" href="dashboard.html">내 신청현황</a>
-    </div>
-    <div class="login-info" id="loginInfo"></div>
-
-    <!-- 필터 표시기 -->
-    <div id="filterIndicator" style="display:none;background:#fff3e0;border:1.5px solid #ffe0b2;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:0.78rem;color:#e65100;display:none;align-items:center;justify-content:space-between">
-      <span id="filterIndicatorText"></span>
-      <a href="#" onclick="clearAllFilters();return false;" style="color:#1565c0;font-weight:700;text-decoration:none;font-size:0.78rem;white-space:nowrap;margin-left:10px">초기화</a>
-    </div>
-
-    <!-- 대시보드 -->
-    <div class="dash">
-      <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체 신청</div></div>
-      <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="label">진행중</div></div>
-      <div class="dash-card"><div class="num c-cancel" id="dCancel">0</div><div class="label">취소</div></div>
-      <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">완료</div></div>
-    </div>
-
-    <!-- 필터 바 -->
-    <div class="filter-bar">
-      <input type="text" id="filterText" placeholder="발행사 검색" oninput="currentPage=1;renderList()">
-      <div class="filter-row">
-        <select id="filterStatus" onchange="currentPage=1;renderList()">
-          <option value="all">전체</option>
-          <option value="wait">조건대기</option>
-          <option value="select">조건선택</option>
-          <option value="input">조건입력</option>
-          <option value="endorse">배서진행</option>
-          <option value="endorsed">배서완료</option>
-          <option value="done">입금완료</option>
-          <option value="cancel">취소</option>
-        </select>
-        <select id="filterDateType" onchange="toggleDateRange();currentPage=1;renderList()">
-          <option value="none">날짜검색</option>
-          <option value="start">입금예정일</option>
-          <option value="due">만기일</option>
-        </select>
-      </div>
-      <div class="date-group" id="dateRange" style="display:none">
-        <input type="date" id="dateFrom" onchange="currentPage=1;renderList()">
-        <span class="date-sep">~</span>
-        <input type="date" id="dateTo" onchange="currentPage=1;renderList()">
-      </div>
-    </div>
-
-    <div class="list-title">신청 이력</div>
-    <div class="list-header">
-      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
-    </div>
-    <div id="listBody" class="list-desktop"></div>
-    <div id="listMobile" class="list-mobile"></div>
-    <div id="loadMoreWrap" style="display:none"></div>
-
-    <div style="text-align:center;margin-top:16px"><a href="#" onclick="doLogout();return false" style="color:#999;font-size:0.78rem;text-decoration:underline">다른 사업자번호로 조회</a></div>
-    <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
-  </div>
-
-</div>
-
-<!-- 상세 모달 -->
-<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <h2 id="modalTitle">상세 정보</h2>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body" id="modalBody"></div>
-  </div>
-</div>
-
-<!-- 계좌 확인 팝업 -->
-<div class="account-overlay" id="accountOverlay">
-  <div class="account-box">
-    <h3>입금 계좌 정보 확인</h3>
-    <div class="account-detail">
-      <div class="ad-row"><span class="ad-lbl">은행명</span><span class="ad-val" id="confirmBank">-</span></div>
-      <div class="ad-row"><span class="ad-lbl">계좌번호</span><span class="ad-val" id="confirmAccount">-</span></div>
-    </div>
-    <p style="font-size:0.82rem;color:#888;margin-bottom:14px">위 계좌 정보가 맞는지 확인해주세요.</p>
-    <div class="account-btn-row">
-      <button class="btn btn-secondary" onclick="closeAccountPopup()">수정</button>
-      <button class="btn btn-confirm-account" id="btnAccountConfirm" onclick="doAccountConfirm()">입력완료</button>
-    </div>
-  </div>
-</div>
-
-<div class="msg-toast" id="toast"></div>
-
-<script>
-// ===== Config =====
-var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
-
-// 배서 계좌 정보 (고정)
-var ENDORSE_INFO = {
-  bank: '우리은행',
-  account: '1002-631-832129',
-  holder: '개인사업자 : (플로우렌트) 신인근',
-  idNo: '880708-1'
-};
-
-// ===== Utility =====
-function $(id){return document.getElementById(id)}
-function fmt(n){return n?Number(n).toLocaleString('ko-KR'):'0'}
-function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
-// 날짜 정규화: ISO/UTC → 한국시간 YYYY-MM-DD
-function fixDate(v){
-  if(!v) return '';
-  var s = String(v);
-  if(s.indexOf('T')!==-1){
-    var d = new Date(s);
-    d.setMinutes(d.getMinutes() + d.getTimezoneOffset() + 540); // UTC→KST(+9)
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  return s.substring(0,10);
-}
-function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
-
-// 공휴일 DB
-var KR_HOLIDAYS={
-  2024:['01-01','02-09','02-10','02-11','02-12','03-01','04-10','05-01','05-06','05-15','06-06','08-15','09-16','09-17','09-18','10-03','10-09','12-25'],
-  2025:['01-01','01-28','01-29','01-30','03-01','03-03','05-01','05-05','05-06','06-06','08-15','10-03','10-05','10-06','10-07','10-08','10-09','12-25'],
-  2026:['01-01','02-16','02-17','02-18','03-01','03-02','05-01','05-05','05-24','05-25','06-06','06-08','08-15','08-17','10-03','10-04','10-05','10-06','10-07','10-08','10-09','12-25'],
-  2027:['01-01','02-06','02-07','02-08','02-09','02-10','03-01','05-01','05-05','05-13','06-06','06-07','08-15','08-16','09-23','09-24','09-25','09-27','10-03','10-04','10-09','10-11','12-25','12-27']
-};
-function isHoliday(d){var y=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return KR_HOLIDAYS[y]&&KR_HOLIDAYS[y].indexOf(mm+'-'+dd)!==-1;}
-function isBusinessDay(d){var dow=d.getDay();if(dow===0||dow===6)return false;return !isHoliday(d);}
-function nextBusinessDay(ds){var d=new Date(ds);while(!isBusinessDay(d))d.setDate(d.getDate()+1);return d;}
-function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function calcDiscount(amount,rate,days,splitCount){
-  days = Math.max(days, 30);
-  var baseFee = Math.round(amount*(rate/100)/30*days) + 1500;
-  var extraSplit = (splitCount && splitCount > 1) ? (splitCount - 1) * 1500 : 0;
-  return baseFee + extraSplit;
-}
-
-// ===== 사업자번호 포맷 (3-2-5) =====
-function formatBizNo(el){
-  var v=el.value.replace(/[^0-9]/g,'');
-  if(v.length>10)v=v.substring(0,10);
-  var f='';
-  if(v.length>3){f=v.substring(0,3)+'-';if(v.length>5){f+=v.substring(3,5)+'-'+v.substring(5)}else{f+=v.substring(3)}}else{f=v}
-  el.value=f;
-}
-function formatBizStr(v){
-  v=v.replace(/[^0-9]/g,'');
-  if(v.length>=10) return v.substring(0,3)+'-'+v.substring(3,5)+'-'+v.substring(5,10);
-  return v;
-}
-function getApplyName(){
-  if(!allBills||!allBills.length) return '';
-  return allBills[allBills.length-1].applyName||'';
-}
-function updateLoginInfo(){
-  var name=getApplyName();
-  var bizFmt=formatBizStr(currentBiz);
-  $('loginInfo').innerHTML=name?'<strong>'+name+'</strong>&nbsp;&nbsp;'+bizFmt:'<strong>'+bizFmt+'</strong>';
-}
-
-// ===== Global State =====
-var allBills = [];
-var currentBiz = ''; // 현재 로그인된 사업자번호
-
-// ===== 로그인/로그아웃 =====
-function doLogin(){
-  var biz = $('loginBiz').value.trim().replace(/[^0-9]/g,'');
-  var pin = $('loginPin').value.trim();
-  if(biz.length !== 10){
-    $('loginMsg').textContent = '사업자번호 10자리를 입력해 주세요.';
-    return;
-  }
-  if(!pin){
-    $('loginMsg').textContent = 'PIN 번호를 입력해 주세요.';
-    return;
-  }
-  $('loginMsg').textContent = '';
-  $('btnLogin').disabled = true;
-  $('btnLogin').textContent = '조회 중...';
-  currentBiz = biz;
-
-  fetch(API_URL+'?action=getUser&applyBiz='+encodeURIComponent(biz))
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(!data.success){
-        $('loginMsg').textContent = '해당 사업자번호로 등록된 신청 내역이 없습니다.';
-        $('btnLogin').disabled = false;
-        $('btnLogin').textContent = '조회하기';
-        currentBiz = '';
-        return;
-      }
-      var storedPin = String(data.data.pinNo || '0000');
-      if(pin !== storedPin){
-        $('loginMsg').textContent = 'PIN 번호가 올바르지 않습니다.';
-        $('btnLogin').disabled = false;
-        $('btnLogin').textContent = '조회하기';
-        return;
-      }
-      loadAll().then(function(){
-        $('loginScreen').style.display = 'none';
-        $('dashScreen').style.display = 'block';
-        updateLoginInfo();
-        renderDashboard();
-        renderList();
-        startAutoRefresh();
-        if(storedPin === '0000'){
-          showPinChangePopup();
-        }
-      });
-    })
-    .catch(function(e){
-      $('loginMsg').textContent = '오류가 발생했습니다. 다시 시도해 주세요.';
-      $('btnLogin').disabled = false;
-      $('btnLogin').textContent = '조회하기';
-      currentBiz = '';
-    });
-}
-
-function doLogout(){
-  stopAutoRefresh();
-  currentBiz = '';
-  allBills = [];
-  $('dashScreen').style.display = 'none';
-  $('loginScreen').style.display = 'block';
-  $('loginBiz').value = '';
-  $('loginPin').value = '';
-  $('btnLogin').disabled = false;
-  $('btnLogin').textContent = '조회하기';
-}
-
-// ===== PIN 변경 팝업 =====
-function showPinChangePopup(){
-  $('newPin1').value = '';
-  $('newPin2').value = '';
-  $('pinMatchMsg').textContent = '';
-  $('btnSavePin').disabled = true;
-  $('btnSavePin').style.opacity = '0.5';
-  $('btnSavePin').style.cursor = 'not-allowed';
-  $('btnSavePin').textContent = '수정하기';
-  $('pinPopup').style.display = 'flex';
-}
-
-function checkPinMatch(){
-  var p1 = $('newPin1').value;
-  var p2 = $('newPin2').value;
-  if(p1.length < 6 || p2.length === 0){
-    $('pinMatchMsg').textContent = '';
-    $('btnSavePin').disabled = true;
-    $('btnSavePin').style.opacity = '0.5';
-    $('btnSavePin').style.cursor = 'not-allowed';
-    return;
-  }
-  if(p1 === p2){
-    $('pinMatchMsg').textContent = '';
-    $('btnSavePin').disabled = false;
-    $('btnSavePin').style.opacity = '1';
-    $('btnSavePin').style.cursor = 'pointer';
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>ì ìì´ì í ì¸ - ë´ ì ì²­íí©</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -600,7 +33,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .btn-new{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#1565c0,#1e88e5);color:#fff;box-shadow:0 4px 12px rgba(21,101,192,0.3);margin-bottom:18px;transition:all 0.2s}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(21,101,192,0.4)}
 
-/* ë¦¬ì¤í¸ â ë°ì¤í¬í± 8ì»¬ë¼ */
+/* ë¦¬ì¤í¸ â ë°ì¤í¬í± 8ì¹¨ë¼ */
 .list-title{font-size:0.92rem;color:#555;font-weight:700;margin-bottom:10px;padding-left:4px}
 .list-header{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
 .list-item{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
@@ -696,7 +129,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .field input[readonly]{background:#f0f0f0;color:#555}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* ì²¨ë¶íì¼ */
+/* ì²¨ííì¼ */
 .file-area{border:2px dashed #ccc;border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border 0.2s;margin-top:4px}
 .file-area:hover{border-color:#1565c0;background:#f8f9ff}
 .file-area .icon{font-size:1.5rem;margin-bottom:4px}
@@ -847,13 +280,13 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
         <label>PIN ë²í¸</label>
         <input type="password" id="loginPin" placeholder="PIN ë²í¸ ìë ¥" inputmode="numeric" maxlength="6" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-      <button class="btn-new" onclick="doLogin()" id="btnLogin">ì¡°ííê¸°</button>
+      <button class="btn-new" onclick="doLogin()" id="btnLogin">ì¡°ííê¸°</button>
       <div class="login-msg" id="loginMsg"></div>
     </div>
     <div class="footer">276íë©ì¤ Â· ì ìì´ì í ì¸ ìì¤í</div>
   </div>
 
-  <!-- ===== PIN ë³ê²½ íì ===== -->
+  <!-- ===== PIN ë³ê²½ íì ===== -->
   <div id="pinPopup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:16px; padding:32px 28px; width:340px; max-width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
       <h3 style="margin:0 0 8px; font-size:18px; color:#1a1a2e;">PIN ë²í¸ ì¤ì </h3>
@@ -896,7 +329,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
       <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">ìë£</div></div>
     </div>
 
-    <!-- íí° ë° -->
+    <!-- íí° ë° -->
     <div class="filter-bar">
       <input type="text" id="filterText" placeholder="ë°íì¬ ê²ì" oninput="currentPage=1;renderList()">
       <div class="filter-row">
@@ -995,7 +428,7 @@ function fixDate(v){
 }
 function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
 
-// ê³µí´ì¼ DB
+// ê³µíì¼ DB
 var KR_HOLIDAYS={
   2024:['01-01','02-09','02-10','02-11','02-12','03-01','04-10','05-01','05-06','05-15','06-06','08-15','09-16','09-17','09-18','10-03','10-09','12-25'],
   2025:['01-01','01-28','01-29','01-30','03-01','03-03','05-01','05-05','05-06','06-06','08-15','10-03','10-05','10-06','10-07','10-08','10-09','12-25'],
@@ -1071,9 +504,10 @@ function doLogin(){
       if(pin !== storedPin){
         $('loginMsg').textContent = 'PIN ë²í¸ê° ì¬ë°ë¥´ì§ ììµëë¤.';
         $('btnLogin').disabled = false;
-        $('btnLogin').textContent = 'ì¡°ííê¸°';
+        $('btnLogin').textContent = 'ì¡°ííê¸°';
         return;
       }
+      // PIN ì¼ì¹ â ì²­êµ¬ ëª©ë¡ ë¡ë
       loadAll().then(function(){
         $('loginScreen').style.display = 'none';
         $('dashScreen').style.display = 'block';
@@ -1081,6 +515,7 @@ function doLogin(){
         renderDashboard();
         renderList();
         startAutoRefresh();
+        // ê¸°ë³¸ PIN '0000'ì´ë©´ ë³ê²½ íì íì
         if(storedPin === '0000'){
           showPinChangePopup();
         }
@@ -1089,7 +524,7 @@ function doLogin(){
     .catch(function(e){
       $('loginMsg').textContent = 'ì¤ë¥ê° ë°ìíìµëë¤. ë¤ì ìëí´ ì£¼ì¸ì.';
       $('btnLogin').disabled = false;
-      $('btnLogin').textContent = 'ì¡°ííê¸°';
+      $('btnLogin').textContent = 'ì¡°ííê¸°';
       currentBiz = '';
     });
 }
@@ -1331,7 +766,7 @@ function renderList(){
   var remaining = filtered.length - visible.length;
   var emptyMsg = allBills.length?'ì¡°ê±´ì ë§ë ë´ì­ì´ ììµëë¤.':'ì ì²­ ë´ì­ì´ ììµëë¤.';
 
-  // ë°ì¤í¬í± ë¦¬ì¤í¸ (7ì»¬ë¼ ê·¸ë¦¬ë)
+  // ë°ì¤í¬í±(ë¦¬ì¤í¸ (7ì»¬ë¼ ê·¸ë¦¬ë)
   var el=$('listBody');
   if(!filtered.length){el.innerHTML='<div class="empty-msg">'+emptyMsg+'</div>';}
   else{
@@ -1366,7 +801,7 @@ function renderList(){
           +'<span class="badge '+bc+'">'+st+'</span>'
         +'</div>'
         +'<div class="m-row2">'
-          +'<span class="m-amount">'+fmt(iq.billAmount)+'ì</span>'
+          +'<span class="m-amount">'+fmt(iq.billAmount)+'ì</span>'
           +'<span class="m-rate">'+rateStr+'</span>'
         +'</div>'
         +'<div class="m-dates">'
@@ -1462,7 +897,7 @@ function accountInfoHTML(iq){
   var bk = iq.bankName||''; var ac = iq.accountNo||''; var fn = iq.attachmentName||'';
   var fData = iq.attachmentData||''; var fType = iq.attachmentType||'';
   if(!bk&&!ac&&!fn) return '';
-  var h = '<div class="form-section"><h3>ìê¸ ê³ì¢ ë° ì²¨ë¶íì¼</h3>';
+  var h = '<div class="form-section"><h3>ìê¸ ê³ì¢ ë° ì²¨ííì¼</h3>';
   h += '<div class="info-grid">';
   h += '<div class="info-item"><div class="lbl">ìíëª</div><div class="val">'+(bk||'-')+'</div></div>';
   h += '<div class="info-item"><div class="lbl">ê³ì¢ë²í¸</div><div class="val">'+(ac||'-')+'</div></div>';
@@ -1648,7 +1083,7 @@ function doCancel(){
     uid:iq.uid,
     status:'cancel',
     cancelledAt:new Date().toLocaleString('ko-KR'),
-    _slackText:'[ì·¨ì] '+iq.issuerName+'\nìì·¨ì¬: '+iq.applyName+'\nì´ì: \u20a9'+fmt(iq.billAmount)+'ì'
+    _slackText:'[ì·¨ì] '+iq.issuerName+'\nìì·¨ì¬: '+iq.applyName+'\nì´ì: \u20a9'+fmt(iq.billAmount)+'ì'
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
@@ -1887,7 +1322,7 @@ function doEditComplete(){
 
   // ë³ê²½ ì¬í­ ê°ì§ (ê¸ì¡, ë§ê¸°ì¼, ìê¸ìì ì¼)
   var changes = [];
-  if(newAmount !== (iq.billAmount||0)) changes.push('ì´ìê¸ì¡: '+fmt(iq.billAmount)+'â'+fmt(newAmount));
+  if(newAmount !== (iq.billAmount||0)) changes.push('ì´ìê¸ì¡: '+fmt(iq.billAmount)+'â'+nmt(newAmount));
   if(newDue !== (iq.billDue||'')) changes.push('ë§ê¸°ì¼: '+(iq.billDue||'-')+'â'+newDue);
   if(newStart !== (iq.startDate||'')) changes.push('ìê¸ìì ì¼: '+(iq.startDate||'-')+'â'+newStart);
 
@@ -1910,7 +1345,7 @@ function doEditComplete(){
   var slackMsg = '[ì ë³´ìì ] '+newIssuer+'\nìì·¨ì¬: '+newApply+'\nì´ì: \u20a9'+fmt(newAmount)+'ì';
   if(changes.length > 0){
     slackMsg += '\nâ  ë³ê²½ì¬í­: '+changes.join(' / ');
-    slackMsg += '\ní ì¸ì¡: \u20a9'+fmt(fee)+'ì | ìê¸ì¡: \u20a9'+fmt(net)+'ì';
+    slackMsg += '\ní ì¸ì¡: \u20a9'+fmt(fee)+'ì | ìê¸ì¡: \u20a9'+fmt(net)+'ì';
   }
 
   var btn = event&&event.target?event.target:null;
