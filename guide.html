@@ -329,6 +329,7 @@ li strong { color:#37474f; }
     <a href="#b2" class="admin">B2. 관리자 대시보드</a>
     <a href="#b3" class="admin">B3. 조건 입력</a>
     <a href="#b4" class="admin">B4. 입금 완료</a>
+    <a href="#b5" class="admin">B5. 첨부파일 공유</a>
     <a href="#ref">참고 사항</a>
   </nav>
 
@@ -596,6 +597,33 @@ li strong { color:#37474f; }
         <li>실제 입금을 진행한 후 상세 모달에서 <strong>입금일</strong>을 입력하고 <strong>입금완료</strong> 버튼을 클릭합니다.</li>
         <li>입금 완료 시 신청자는 대시보드에서 할인내역서를 확인할 수 있게 됩니다.</li>
       </ul>
+    </div>
+
+    <!-- B5 -->
+    <div class="section" id="b5">
+      <span class="section-label admin">관리자</span>
+      <h2>B5. 첨부파일 관리 및 공유</h2>
+      <p>신청자가 업로드한 첨부파일(매출계산서 등)은 Google Drive에 자동 저장되며, 관리자 상세 모달에서 확인·공유할 수 있습니다.</p>
+
+      <h3>파일 저장 방식</h3>
+      <ul>
+        <li>신청자 업로드 시 파일이 Google Drive 공유 폴더에 자동 저장됩니다.</li>
+        <li>파일명은 <strong>날짜_수취사_발행사_어음액.확장자</strong> 형식으로 자동 변환됩니다.</li>
+        <li>지원 형식: jpg, png, pdf (최대 5MB)</li>
+      </ul>
+
+      <h3>관리자 상세 모달 — 첨부파일 영역</h3>
+      <table>
+        <tr><th>버튼</th><th>기능</th></tr>
+        <tr><td><strong>파일 보기</strong></td><td>새 탭에서 Google Drive 파일 열기</td></tr>
+        <tr><td><strong>링크 복사</strong></td><td>파일 공유 링크를 클립보드에 복사</td></tr>
+        <tr><td><strong>공유</strong></td><td>모바일: 카카오톡·슬랙 등 앱 선택 공유 / PC: 링크 복사</td></tr>
+        <tr><td><strong>Drive 폴더 열기</strong></td><td>파일 URL이 없는 기존 데이터의 경우, Drive 폴더로 이동</td></tr>
+      </table>
+
+      <div class="tip">
+        <strong>Tip.</strong> 모바일에서 <strong>공유</strong> 버튼을 누르면 카카오톡, 슬랙, 문자 등 설치된 앱 목록이 표시되어 파일을 바로 전달할 수 있습니다.
+      </div>
     </div>
 
     <div class="divider"></div>
