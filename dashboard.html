@@ -35,14 +35,14 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
 /* 리스트 — 데스크톱 8컬럼 */
 .list-title{font-size:0.92rem;color:#555;font-weight:700;margin-bottom:10px;padding-left:4px}
-.list-header{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
-.list-item{display:grid;grid-template-columns:34px 62px 80px 1fr 110px 58px 80px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
+.list-header{display:grid;grid-template-columns:34px 62px 72px 1fr 100px 100px 50px 72px;gap:5px;padding:8px 12px;font-size:0.65rem;font-weight:700;color:#888;border-bottom:2px solid #e0e0e0}
+.list-item{display:grid;grid-template-columns:34px 62px 72px 1fr 100px 100px 50px 72px;gap:5px;align-items:center;padding:10px 12px;background:#fff;border-radius:10px;margin-bottom:5px;box-shadow:0 1px 4px rgba(0,0,0,0.04);font-size:0.78rem;cursor:pointer;transition:all 0.15s}
 .list-item:hover{box-shadow:0 3px 12px rgba(21,101,192,0.12);transform:translateY(-1px)}
 .list-item .no{color:#999;font-size:0.7rem}
 .list-item .issuer{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .list-item .amount{font-weight:700;color:#1565c0;text-align:right;font-size:0.76rem}
 .list-item .rate{font-size:0.76rem;color:#e65100;text-align:center;font-weight:700}
-.list-item .date{font-size:0.72rem;color:#666;text-align:center}
+.list-item .date{font-size:0.65rem;color:#666;text-align:center}
 
 /* 모바일 카드 뷰 */
 .list-mobile{display:none}
@@ -283,7 +283,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
       <button class="btn-new" onclick="doLogin()" id="btnLogin">조회하기</button>
       <div class="login-msg" id="loginMsg"></div>
     </div>
-    <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
+    <div class="footer">276홀딩스 · 전자어음 할인 시스템 | <a href="user_guide.html" target="_blank" style="color:#1565c0;text-decoration:underline;">사용자가이드</a></div>
   </div>
 
   <!-- ===== PIN 변경 팝업 ===== -->
@@ -358,14 +358,14 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
     <div class="list-title">신청 이력</div>
     <div class="list-header">
-      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
+      <span>#</span><span style="text-align:center">상태</span><span style="text-align:center">입금예정일</span><span>발행사</span><span style="text-align:right">어음금액</span><span style="text-align:right">입금액</span><span style="text-align:center">할인율</span><span style="text-align:center">만기일</span>
     </div>
     <div id="listBody" class="list-desktop"></div>
     <div id="listMobile" class="list-mobile"></div>
     <div id="loadMoreWrap" style="display:none"></div>
 
     <div style="text-align:center;margin-top:16px"><a href="#" onclick="doLogout();return false" style="color:#999;font-size:0.78rem;text-decoration:underline">다른 사업자번호로 조회</a></div>
-    <div class="footer">276홀딩스 · 전자어음 할인 시스템</div>
+    <div class="footer">276홀딩스 · 전자어음 할인 시스템 | <a href="user_guide.html" target="_blank" style="color:#1565c0;text-decoration:underline;">사용자가이드</a></div>
   </div>
 
 </div>
@@ -500,7 +500,7 @@ function doLogin(){
         currentBiz = '';
         return;
       }
-      var storedPin = String(data.data.pinNo || '0000');
+      var storedPin = String(data.data.pinNo || '000000');
       if(pin !== storedPin){
         $('loginMsg').textContent = 'PIN 번호가 올바르지 않습니다.';
         $('btnLogin').disabled = false;
@@ -516,7 +516,7 @@ function doLogin(){
         renderList();
         startAutoRefresh();
         // 기본 PIN '0000'이면 변경 팝업 표시
-        if(storedPin === '0000'){
+        if(storedPin === '000000'){
           showPinChangePopup();
         }
       });
@@ -785,6 +785,7 @@ function renderList(){
         +'<span class="date">'+shortDate(startDt)+'</span>'
         +'<span class="issuer">'+(iq.issuerName||'-')+'</span>'
         +'<span class="amount">'+fmt(iq.billAmount)+'</span>'
+        +'<span class="amount" style="color:#2e7d32">'+(iq.net?fmt(iq.net):'-')+'</span>'
         +'<span class="rate">'+rateStr+'</span>'
         +'<span class="date">'+shortDate(fixDate(iq.billDue)||'-')+'</span>'
         +'</div>';
