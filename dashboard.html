@@ -13,11 +13,12 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
 
 /* 대시보드 요약 카드 */
-.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-.dash-card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 5px rgba(0,0,0,0.06)}
-.dash-card .num{font-size:1.6rem;font-weight:800;line-height:1.2}
-.dash-card .label{font-size:0.72rem;color:#888;margin-top:2px}
-.c-total{color:#1565c0}.c-prog{color:#e65100}.c-cancel{color:#c62828}.c-done{color:#2e7d32}
+.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.dash-card{background:#fff;border-radius:10px;padding:12px 6px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.dash-card .num{font-size:1.35rem;font-weight:800;line-height:1.2}
+.dash-card .sub-amount{font-size:0.72rem;font-weight:600;margin-top:2px;line-height:1.3}
+.dash-card .label{font-size:0.62rem;color:#888;margin-top:4px}
+.c-total{color:#1565c0}.c-wait{color:#e65100}.c-prog{color:#7b1fa2}.c-cancel{color:#c62828}.c-done{color:#2e7d32}
 
 /* 필터 바 */
 .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
@@ -234,10 +235,11 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   .wrap{padding:10px}
   h1{font-size:1.1rem;padding:12px 0 4px}
   .subtitle{font-size:0.72rem}
-  .dash{grid-template-columns:repeat(4,1fr);gap:4px}
-  .dash-card{padding:10px 6px}
-  .dash-card .num{font-size:1.2rem}
-  .dash-card .label{font-size:0.65rem}
+  .dash{grid-template-columns:repeat(5,1fr);gap:4px}
+  .dash-card{padding:8px 4px;border-radius:8px}
+  .dash-card .num{font-size:1rem}
+  .dash-card .sub-amount{font-size:0.52rem}
+  .dash-card .label{font-size:0.52rem}
   .nav-tab{padding:9px 0;font-size:0.8rem}
   .modal{margin:10px auto;border-radius:12px}
   .modal-body{padding:14px}
@@ -323,10 +325,11 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 
     <!-- 대시보드 -->
     <div class="dash">
-      <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="label">전체 신청</div></div>
-      <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="label">진행중</div></div>
-      <div class="dash-card"><div class="num c-cancel" id="dCancel">0</div><div class="label">취소</div></div>
-      <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="label">완료</div></div>
+      <div class="dash-card"><div class="num c-total" id="dTotal">0</div><div class="sub-amount" style="color:#1565c0" id="dTotalAmt">0원</div><div class="label">전체 신청</div></div>
+      <div class="dash-card"><div class="num c-wait" id="dWait">0</div><div class="sub-amount" style="color:#e65100" id="dWaitAmt">0원</div><div class="label">대기</div></div>
+      <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="sub-amount" style="color:#7b1fa2" id="dProgAmt">0원</div><div class="label">진행중</div></div>
+      <div class="dash-card"><div class="num c-cancel" id="dCancel">0</div><div class="sub-amount" style="color:#c62828" id="dCancelAmt">0원</div><div class="label">취소</div></div>
+      <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="sub-amount" style="color:#2e7d32" id="dDoneAmt">0원</div><div class="label">완료</div></div>
     </div>
 
     <!-- 필터 바 -->
@@ -414,6 +417,7 @@ var ENDORSE_INFO = {
 // ===== Utility =====
 function $(id){return document.getElementById(id)}
 function fmt(n){return n?Number(n).toLocaleString('ko-KR'):'0'}
+function fmtAmt(v){if(!v)return'0원';if(v>=100000000){var a=Math.floor(v/100000000);var m=Math.round((v%100000000)/10000);return a+'억'+(m>0?' '+fmt(m)+'만':'');}if(v>=10000)return fmt(Math.round(v/10000))+'만';return fmt(v)+'원';}
 function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
 // 날짜 정규화: ISO/UTC → 한국시간 YYYY-MM-DD
 function fixDate(v){
@@ -724,13 +728,26 @@ function badgeClass(s){
 // ===== 대시보드 렌더 =====
 function renderDashboard(){
   var data = isFilterActive() ? getFiltered() : allBills;
-  var prog = data.filter(function(x){return x.status!=='done'&&x.status!=='cancel'}).length;
-  var cancel = data.filter(function(x){return x.status==='cancel'}).length;
-  var done = data.length - prog - cancel;
+  var wait=0,prog=0,cancel=0,totalAmt=0,waitAmt=0,progAmt=0,cancelAmt=0,doneAmt=0;
+  data.forEach(function(x){
+    var amt=x.billAmount||0;
+    totalAmt+=amt;
+    if(x.status==='wait'){wait++;waitAmt+=amt;}
+    else if(x.status==='cancel'){cancel++;cancelAmt+=amt;}
+    else if(x.status==='done'){doneAmt+=amt;}
+    else{prog++;progAmt+=amt;}
+  });
+  var done=data.length-wait-prog-cancel;
   $('dTotal').textContent = data.length;
+  $('dWait').textContent = wait;
   $('dProg').textContent = prog;
   $('dCancel').textContent = cancel;
   $('dDone').textContent = done;
+  $('dTotalAmt').textContent=fmtAmt(totalAmt);
+  $('dWaitAmt').textContent=fmtAmt(waitAmt);
+  $('dProgAmt').textContent=fmtAmt(progAmt);
+  $('dCancelAmt').textContent=fmtAmt(cancelAmt);
+  $('dDoneAmt').textContent=fmtAmt(doneAmt);
 
   // 필터 표시기
   var ind=$('filterIndicator');
