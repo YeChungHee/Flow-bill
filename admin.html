@@ -1090,6 +1090,19 @@ function copyShareLink(url){
   }
 }
 
+// ===== 파일 공유 (모바일: 카카오톡/슬랙 등 앱 선택, PC: 링크 복사 폴백) =====
+function shareFile(fileName, fileUrl){
+  if(navigator.share){
+    navigator.share({
+      title: fileName,
+      text: '[전자어음 첨부파일] ' + fileName,
+      url: fileUrl
+    }).catch(function(){});
+  } else {
+    copyShareLink(fileUrl);
+  }
+}
+
 // ===== 신청자 입력정보 읽기 =====
 function applicantInfoHTML(iq){
   var bk=iq.bankName||'';var ac=iq.accountNo||'';var fn=iq.attachmentName||'';
@@ -1117,6 +1130,7 @@ function applicantInfoHTML(iq){
         h+='<div style="display:flex;gap:8px">';
         h+='<a href="'+fData+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">파일 보기</a>';
         h+='<button onclick="copyShareLink(\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">링크 복사</button>';
+        h+='<button onclick="shareFile(\''+fn.replace(/'/g,"\\'")+'\',\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#fff3e0;color:#e65100;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">공유</button>';
         h+='</div>';
       } else {
         // 기존 base64 방식 (하위호환)
