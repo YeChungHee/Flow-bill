@@ -586,14 +586,17 @@ function saveNewPin(){
   $('btnSavePin').disabled = true;
   $('btnSavePin').style.opacity = '0.5';
   $('btnSavePin').textContent = '저장 중...';
-  fetch(API_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({action:'updatePin', applyBiz:currentBiz, pinNo:newPin}),
-    redirect: 'follow'
-  })
-  .then(function(){
-    $('pinPopup').style.display = 'none';
+  fetch(API_URL + '?action=updatePin&applyBiz=' + encodeURIComponent(currentBiz) + '&pinNo=' + encodeURIComponent(newPin))
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data.success){
+      $('pinPopup').style.display = 'none';
+    } else {
+      $('pinMatchMsg').textContent = '저장 실패: ' + (data.error||'');
+      $('btnSavePin').disabled = false;
+      $('btnSavePin').style.opacity = '1';
+      $('btnSavePin').textContent = '수정하기';
+    }
   })
   .catch(function(){
     $('pinMatchMsg').textContent = '오류가 발생했습니다. 다시 시도해 주세요.';
