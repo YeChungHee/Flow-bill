@@ -504,7 +504,8 @@ function doLogin(){
         currentBiz = '';
         return;
       }
-      var storedPin = String(data.data.pinNo || '000000');
+      var rawPin = data.data.pinNo;
+      var storedPin = (rawPin === undefined || rawPin === null || rawPin === '' || rawPin === 0) ? '000000' : String(rawPin);
       if(pin !== storedPin){
         $('loginMsg').textContent = 'PIN 번호가 올바르지 않습니다.';
         $('btnLogin').disabled = false;
