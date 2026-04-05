@@ -473,6 +473,7 @@ function loadAll(){
     .then(function(data){
       console.log('API raw response:', data);
       var all = toArray(data);
+      all = all.filter(function(item){ return item.applyName || item.issuerName || (item.billAmount && Number(item.billAmount)>0); });
       all.forEach(function(item){
         if(item.splitAmounts && typeof item.splitAmounts==='string'){
           try{ item.splitAmounts=JSON.parse(item.splitAmounts); }catch(e){ item.splitAmounts=[]; }

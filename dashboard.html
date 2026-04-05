@@ -636,6 +636,8 @@ function loadAll(){
     .then(function(data){
       console.log('API raw response:', data);
       var all = toArray(data);
+      // 빈 행 필터링
+      all = all.filter(function(item){ return item.applyName || item.issuerName || (item.billAmount && Number(item.billAmount)>0); });
       // splitAmounts 문자열→배열 파싱
       all.forEach(function(item){
         if(item.splitAmounts && typeof item.splitAmounts==='string'){
