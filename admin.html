@@ -1112,7 +1112,11 @@ function applicantInfoHTML(iq){
     +'<div class="ai-row"><span class="ai-lbl">은행명</span><span class="ai-val">'+(bk||'-')+'</span></div>'
     +'<div class="ai-row"><span class="ai-lbl">계좌번호</span><span class="ai-val">'+(ac||'-')+'</span></div>';
   if(fn){
-    h+='<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>';
+    if(fData){
+      h+='<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val" style="cursor:pointer;color:#1565c0;text-decoration:underline" onclick="window.open(\''+fData+'\',\'_blank\')">'+fn+'</span></div>';
+    } else {
+      h+='<div class="ai-row"><span class="ai-lbl">첨부파일</span><span class="ai-val">'+fn+'</span></div>';
+    }
     if(fData){
       var isDriveLink=fData.indexOf('drive.google.com')>=0;
       h+='<div style="margin-top:8px;background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px">';
@@ -1144,6 +1148,12 @@ function applicantInfoHTML(iq){
         h+='<a href="'+fData+'" download="'+fn+'" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">다운로드</a>';
         h+='</div>';
       }
+      h+='</div>';
+    } else {
+      // Drive URL 없는 경우 — 폴더 링크로 안내
+      h+='<div style="margin-top:8px;display:flex;gap:8px">';
+      h+='<a href="https://drive.google.com/drive/folders/1EA4KCxRizzfxyw51iZI5lg2Ih8Tqc8R8" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">Drive 폴더 열기</a>';
+      h+='<button onclick="shareFile(\''+fn.replace(/'/g,"\\'")+'\',\'https://drive.google.com/drive/folders/1EA4KCxRizzfxyw51iZI5lg2Ih8Tqc8R8\')" style="flex:1;padding:8px;border-radius:8px;background:#fff3e0;color:#e65100;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">공유</button>';
       h+='</div>';
     }
   }
