@@ -291,18 +291,27 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
   <!-- ===== PIN 변경 팝업 ===== -->
   <div id="pinPopup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:16px; padding:32px 28px; width:340px; max-width:92%; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
-      <h3 style="margin:0 0 8px; font-size:18px; color:#1a1a2e;">PIN 번호 설정</h3>
-      <p style="color:#666; font-size:14px; margin:0 0 24px; line-height:1.5;">보안을 위해 새로운 6자리 PIN 번호를 설정해 주세요.</p>
-      <div class="field" style="margin-bottom:14px;">
+      <h3 style="margin:0 0 8px; font-size:18px; color:#1a1a2e;">초기 설정</h3>
+      <p style="color:#666; font-size:14px; margin:0 0 20px; line-height:1.5;">보안을 위해 새 PIN 번호를 설정하고,<br>담당자 정보를 입력해 주세요.</p>
+      <div class="field" style="margin-bottom:12px;">
+        <label>담당자 성명</label>
+        <input type="text" id="applyUserName" placeholder="성명 입력" maxlength="20" oninput="checkPinMatch()">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>휴대폰 번호</label>
+        <input type="tel" id="applyPhone" placeholder="010-0000-0000" inputmode="tel" maxlength="13" oninput="formatPhone(this);checkPinMatch()">
+      </div>
+      <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+      <div class="field" style="margin-bottom:12px;">
         <label>새 PIN 번호 (6자리)</label>
         <input type="password" id="newPin1" placeholder="새 PIN 번호 입력" inputmode="numeric" maxlength="6" oninput="checkPinMatch()">
       </div>
-      <div class="field" style="margin-bottom:14px;">
+      <div class="field" style="margin-bottom:12px;">
         <label>PIN 번호 확인</label>
         <input type="password" id="newPin2" placeholder="PIN 번호 재입력" inputmode="numeric" maxlength="6" oninput="checkPinMatch()">
       </div>
-      <div id="pinMatchMsg" style="color:#e74c3c; font-size:13px; margin-bottom:16px; min-height:18px;"></div>
-      <button id="btnSavePin" class="btn-new" onclick="saveNewPin()" disabled style="width:100%; opacity:0.5; cursor:not-allowed;">수정하기</button>
+      <div id="pinMatchMsg" style="color:#e74c3c; font-size:13px; margin-bottom:14px; min-height:18px;"></div>
+      <button id="btnSavePin" class="btn-new" onclick="saveNewPin()" disabled style="width:100%; opacity:0.5; cursor:not-allowed;">저장하기</button>
     </div>
   </div>
 
@@ -505,7 +514,7 @@ function doLogin(){
         return;
       }
       var rawPin = data.data.pinNo;
-      var storedPin = (rawPin === undefined || rawPin === null || rawPin === '' || rawPin === 0) ? '000000' : String(rawPin);
+      var storedPin = (rawPin === undefined || rawPin === null || rawPin === '' || rawPin === 0 || rawPin === '0000') ? '000000' : String(rawPin);
       if(pin !== storedPin){
         $('loginMsg').textContent = 'PIN 번호가 올바르지 않습니다.';
         $('btnLogin').disabled = false;
@@ -520,7 +529,7 @@ function doLogin(){
         renderDashboard();
         renderList();
         startAutoRefresh();
-        // 기본 PIN '0000'이면 변경 팝업 표시
+        // 기본 PIN이면 변경 팝업 표시
         if(storedPin === '000000'){
           showPinChangePopup();
         }
@@ -547,7 +556,15 @@ function doLogout(){
 }
 
 // ===== PIN 변경 팝업 =====
+function formatPhone(el){
+  var v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>3&&v.length<=7) v=v.slice(0,3)+'-'+v.slice(3);
+  else if(v.length>7) v=v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+  el.value=v;
+}
 function showPinChangePopup(){
+  $('applyUserName').value = '';
+  $('applyPhone').value = '';
   $('newPin1').value = '';
   $('newPin2').value = '';
   $('pinMatchMsg').textContent = '';
@@ -559,10 +576,14 @@ function showPinChangePopup(){
 }
 
 function checkPinMatch(){
+  var userName = $('applyUserName').value.trim();
+  var phone = $('applyPhone').value.trim();
   var p1 = $('newPin1').value;
   var p2 = $('newPin2').value;
-  if(p1.length < 6 || p2.length === 0){
-    $('pinMatchMsg').textContent = '';
+  // 성명, 휴대폰, PIN 모두 입력 필수
+  if(!userName || !phone || p1.length < 6 || p2.length === 0){
+    if(!userName || !phone) $('pinMatchMsg').textContent = '성명과 휴대폰 번호를 입력해 주세요.';
+    else $('pinMatchMsg').textContent = '';
     $('btnSavePin').disabled = true;
     $('btnSavePin').style.opacity = '0.5';
     $('btnSavePin').style.cursor = 'not-allowed';
@@ -583,10 +604,12 @@ function checkPinMatch(){
 
 function saveNewPin(){
   var newPin = $('newPin1').value;
+  var userName = $('applyUserName').value.trim();
+  var phone = $('applyPhone').value.trim();
   $('btnSavePin').disabled = true;
   $('btnSavePin').style.opacity = '0.5';
   $('btnSavePin').textContent = '저장 중...';
-  fetch(API_URL + '?action=updatePin&applyBiz=' + encodeURIComponent(currentBiz) + '&pinNo=' + encodeURIComponent(newPin))
+  fetch(API_URL + '?action=updatePin&applyBiz=' + encodeURIComponent(currentBiz) + '&pinNo=' + encodeURIComponent(newPin) + '&applyUserName=' + encodeURIComponent(userName) + '&phone=' + encodeURIComponent(phone))
   .then(function(r){ return r.json(); })
   .then(function(data){
     if(data.success){
@@ -595,7 +618,7 @@ function saveNewPin(){
       $('pinMatchMsg').textContent = '저장 실패: ' + (data.error||'');
       $('btnSavePin').disabled = false;
       $('btnSavePin').style.opacity = '1';
-      $('btnSavePin').textContent = '수정하기';
+      $('btnSavePin').textContent = '저장하기';
     }
   })
   .catch(function(){
