@@ -958,7 +958,7 @@ function doAdminSave(){
     splitEndorsement: !!splitOn,
     splitCount: splitCount,
     splitAmounts: JSON.stringify(splitAmounts),
-    _slackText: '[할인 조건 전달] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원 | 입금액: \u20a9'+fmt(net)+'원'+(splitOn?'\n분할배서: '+splitCount+'장':'')
+    _slackText: '[할인 조건 전달] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: \u20a9'+fmt(iq.billAmount)+'원 \n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원\n입금액: \u20a9'+fmt(net)+'원'
   };
 
   // 확인 팝업 내용 생성
@@ -1023,7 +1023,7 @@ function doDepositComplete(){
   var updateData = {
     status: 'done',
     depositDate: depositDate,
-    _slackText: '[입금 완료] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n입금액: \u20a9'+fmt(iq.net)+'원\n입금일: '+depositDate
+    _slackText: '[입금 완료] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n입금액: \u20a9'+fmt(iq.net)+'원 \n입금일: '+depositDate
   };
 
   updateBillAPI(iq.uid, updateData).then(function(){

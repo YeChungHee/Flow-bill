@@ -1151,7 +1151,7 @@ function doRequestProceed(){
     action:'updateBill',
     uid:iq.uid,
     status:'input',
-    _slackText:'[진행요청] '+iq.issuerName+'\n수취사: '+iq.applyName
+    _slackText:'[진행요청] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName
   };
   updateBillAPI(payload).then(function(){
     return loadAll();
@@ -1286,7 +1286,7 @@ function doAccountConfirm(){
       attachmentData: fileResult ? fileResult.fileUrl : (iq.attachmentData||''),
       attachmentType: fileResult ? 'drive_link' : (iq.attachmentType||''),
       status:'endorse',
-      _slackText:'[배서 요청] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: ₩'+fmt(iq.billAmount)+'원\n계좌: '+d.bankName+' '+d.accountNo+(fileResult?' (첨부파일: '+fileResult.fileUrl+')':'')
+      _slackText:'[배서 요청] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: ₩'+fmt(iq.billAmount)+'원'
     };
     return updateBillAPI(payload).then(function(){
       selectedFile = null;
@@ -1434,7 +1434,7 @@ function doEndorseComplete(){
     status:'endorsed',
     endorseCompleted:true,
     endorseCompletedAt:new Date().toLocaleString('ko-KR'),
-    _slackText:'[배서 완료] '+iq.issuerName+'\n수취사: '+iq.applyName+'\n어음: \u20a9'+fmt(iq.billAmount)+'원\n→ 입금완료 버튼 대기중'
+    _slackText:'[배서 완료] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: \u20a9'+fmt(iq.billAmount)+'원 \n입금액: \u20a9'+fmt(iq.net)+'원\n계좌: '+(iq.bankName||'')+' '+(iq.accountNo||'')+'\n→ 입금완료 버튼 대기중'
   };
   updateBillAPI(payload).then(function(){
     return loadAll();

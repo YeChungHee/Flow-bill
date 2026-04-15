@@ -388,12 +388,14 @@ function buildSlackText(){
   var days=parseInt($('usageDays').value)||0;
   var settle=nextBusinessDay(due);
 
-  var text='[전자어음 할인 문의]\n'+
-    '수취사: '+applyName+' ('+applyBiz+')\n'+
-    '발행사: '+issuerName+' ('+issuerBiz+')\n'+
+  var text='[전자어음 할인 문의] \n'+
+    '수취사: '+applyName+' ('+applyBiz+') \n'+
+    '발행사: '+issuerName+' ('+issuerBiz+') \n'+
     '어음금액: \uffe6'+formatNumber(amount)+'\uc6d0\n'+
-    '만기일: '+due+' → 결제일: '+fmtDate(settle)+'\n'+
-    '사용일수: '+days+'일';
+    '사용일수: '+days+'일\n'+
+    ' \n'+
+    '만기일: '+due+' \n'+
+    '→ 결제일: '+fmtDate(settle);
   return text;
 }
 
