@@ -138,6 +138,14 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .file-name{font-size:0.82rem;color:#1565c0;font-weight:600;margin-top:6px}
 .file-input{display:none}
 .file-uploading{color:#f57c00;font-size:0.8rem;margin-top:6px}
+/* 다중 파일 목록 */
+.file-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.file-item{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:8px;padding:8px 10px}
+.file-item .fi-icon{font-size:1.2rem;flex-shrink:0}
+.file-item .fi-name{flex:1;font-size:0.78rem;color:#333;word-break:break-all}
+.file-item .fi-remove{width:24px;height:24px;border-radius:50%;border:none;background:#ffebee;color:#c62828;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-item .fi-remove:hover{background:#ffcdd2}
+.file-count{font-size:0.72rem;color:#888;margin-top:4px}
 /* 첨부파일 미리보기 */
 .attach-preview{background:#f8f9ff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-top:8px}
 .attach-preview img{max-width:100%;border-radius:8px;margin-bottom:8px}
@@ -939,51 +947,70 @@ function splitHTML(iq){
   return h;
 }
 
+// ===== 첨부파일 파싱 (하위호환: 단일문자열 ↔ JSON배열) =====
+function parseAttachments(name, data, type){
+  function toArr(val){ if(!val) return []; try { var a=JSON.parse(val); if(Array.isArray(a)) return a; } catch(e){} return val?[val]:[]; }
+  var names=toArr(name), urls=toArr(data), types=toArr(type);
+  var arr=[];
+  for(var i=0;i<names.length;i++){
+    arr.push({ name:names[i]||'', url:urls[i]||'', type:types[i]||'' });
+  }
+  return arr;
+}
+
+// ===== 단일 첨부파일 HTML 렌더 =====
+function renderOneAttachment(att){
+  var fn=att.name, fData=att.url, fType=att.type;
+  var h='';
+  if(fData){
+    var isDriveLink = fData.indexOf('drive.google.com') >= 0;
+    h += '<div class="attach-preview">';
+    if(isDriveLink){
+      var fileId = fData.match(/\/d\/([^\/]+)/);
+      var thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id='+fileId[1]+'&sz=w400' : '';
+      var isImage = fn.match(/\.(jpg|jpeg|png|gif)$/i);
+      if(isImage && thumbUrl){
+        h += '<img src="'+thumbUrl+'" alt="'+fn+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
+      } else {
+        h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
+      }
+      h += '<div class="file-label">'+fn+'</div>';
+      h += '<div class="attach-btns">';
+      h += '<a href="'+fData+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">파일 보기</a>';
+      h += '<button onclick="copyShareLink(\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">링크 복사</button>';
+      h += '</div>';
+    } else {
+      var isImg = fType.indexOf('image')>=0;
+      if(isImg){
+        h += '<img src="'+fData+'" alt="'+fn+'" style="max-width:100%;border-radius:8px">';
+      } else {
+        h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
+      }
+      h += '<div class="file-label">'+fn+'</div>';
+      h += '<div class="attach-btns">';
+      h += '<a href="'+fData+'" download="'+fn+'" class="btn-preview-dl">다운로드</a>';
+      h += '</div>';
+    }
+    h += '</div>';
+  } else {
+    h += '<div class="val">'+fn+'</div>';
+  }
+  return h;
+}
+
 // ===== 계좌/첨부 정보 HTML =====
 function accountInfoHTML(iq){
-  var bk = iq.bankName||''; var ac = iq.accountNo||''; var fn = iq.attachmentName||'';
-  var fData = iq.attachmentData||''; var fType = iq.attachmentType||'';
-  if(!bk&&!ac&&!fn) return '';
+  var bk = iq.bankName||''; var ac = iq.accountNo||'';
+  var atts = parseAttachments(iq.attachmentName, iq.attachmentData, iq.attachmentType);
+  if(!bk&&!ac&&atts.length===0) return '';
   var h = '<div class="form-section"><h3>입금 계좌 및 첨부파일</h3>';
   h += '<div class="info-grid">';
   h += '<div class="info-item"><div class="lbl">은행명</div><div class="val">'+(bk||'-')+'</div></div>';
   h += '<div class="info-item"><div class="lbl">계좌번호</div><div class="val">'+(ac||'-')+'</div></div>';
-  if(fn){
-    h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서)</div>';
-    if(fData){
-      var isDriveLink = fData.indexOf('drive.google.com') >= 0;
-      h += '<div class="attach-preview">';
-      if(isDriveLink){
-        // 구글 드라이브 링크 방식
-        var fileId = fData.match(/\/d\/([^\/]+)/);
-        var thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id='+fileId[1]+'&sz=w400' : '';
-        var isImage = fn.match(/\.(jpg|jpeg|png|gif)$/i);
-        if(isImage && thumbUrl){
-          h += '<img src="'+thumbUrl+'" alt="'+fn+'" style="max-width:100%;border-radius:8px;margin-bottom:8px">';
-        } else {
-          h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
-        }
-        h += '<div class="file-label">'+fn+'</div>';
-        h += '<div class="attach-btns">';
-        h += '<a href="'+fData+'" target="_blank" style="flex:1;padding:8px;border-radius:8px;background:#e3f2fd;color:#1565c0;font-size:0.78rem;font-weight:600;text-align:center;text-decoration:none">파일 보기</a>';
-        h += '<button onclick="copyShareLink(\''+fData+'\')" style="flex:1;padding:8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:0.78rem;font-weight:600;text-align:center;border:none;cursor:pointer">링크 복사</button>';
-        h += '</div>';
-      } else {
-        // 기존 base64 방식 (하위호환)
-        var isImg = fType.indexOf('image')>=0;
-        if(isImg){
-          h += '<img src="'+fData+'" alt="'+fn+'" style="max-width:100%;border-radius:8px">';
-        } else {
-          h += '<div style="text-align:center;padding:16px"><span style="font-size:2.5rem">📄</span></div>';
-        }
-        h += '<div class="file-label">'+fn+'</div>';
-        h += '<div class="attach-btns">';
-        h += '<a href="'+fData+'" download="'+fn+'" class="btn-preview-dl">다운로드</a>';
-        h += '</div>';
-      }
-      h += '</div>';
-    } else {
-      h += '<div class="val">'+fn+'</div>';
+  if(atts.length>0){
+    h += '<div class="info-item info-full"><div class="lbl">첨부파일 (매출계산서) — '+atts.length+'개</div>';
+    for(var i=0;i<atts.length;i++){
+      h += renderOneAttachment(atts[i]);
     }
     h += '</div>';
   }
@@ -1063,11 +1090,11 @@ function openModal(idx){
     html += '<div class="form-section" id="inputForm"><h3>입금 계좌 및 첨부파일</h3>'
       +'<div class="row2"><div class="field"><label>은행명</label><input type="text" id="fBankName" value="'+(iq.bankName||'')+'" placeholder="은행명 입력"></div>'
       +'<div class="field"><label>계좌번호</label><input type="text" id="fAccountNo" value="'+(iq.accountNo||'')+'" placeholder="계좌번호 입력" inputmode="numeric"></div></div>'
-      +'<div class="field"><label>첨부파일 (매출계산서)</label>'
-      +'<div class="file-area" onclick="$(\'fileInput\').click()"><div class="icon">📎</div><div class="text">클릭하여 파일 업로드<br><span style=\'font-size:0.7rem;color:#aaa\'>jpg, png, pdf 지원 (최대 5MB)</span></div></div>'
+      +'<div class="field"><label>첨부파일 (매출계산서, 최대 3개)</label>'
+      +'<div class="file-area" onclick="$(\'fileInput\').click()"><div class="icon">📎</div><div class="text">클릭하여 파일 추가<br><span style=\'font-size:0.7rem;color:#aaa\'>jpg, png, pdf 지원 (파일당 5MB, 최대 3개)</span></div></div>'
       +'<input type="file" id="fileInput" class="file-input" onchange="onFileSelect(this)" accept=".pdf,.jpg,.jpeg,.png">'
-      +'<div class="file-name" id="fileName">'+(iq.attachmentName||'')+'</div>'
-      +'<div id="filePreviewArea"></div>'
+      +'<div id="fileListArea" class="file-list"></div>'
+      +'<div class="file-count" id="fileCount"></div>'
       +'</div></div>';
     html += '<div class="btn-row">'
       +'<button class="btn btn-warn" onclick="showEditMode()">정보수정</button>'
@@ -1162,25 +1189,52 @@ function doRequestProceed(){
   });
 }
 
-// ===== 파일 선택 =====
-var selectedFile = null;
+// ===== 파일 선택 (최대 3개) =====
+var selectedFiles = [];
+var MAX_FILES = 3;
 function onFileSelect(el){
   if(el.files&&el.files[0]){
-    selectedFile = el.files[0];
-    $('fileName').textContent = el.files[0].name;
-    // 미리보기 표시
-    var previewArea = $('filePreviewArea');
-    if(previewArea){
-      var f = el.files[0];
-      if(f.type.indexOf('image')>=0){
-        var reader = new FileReader();
-        reader.onload = function(e){ previewArea.innerHTML = '<img src="'+e.target.result+'" style="max-width:100%;border-radius:8px;margin-top:8px">'; };
-        reader.readAsDataURL(f);
-      } else {
-        previewArea.innerHTML = '<div style="text-align:center;padding:12px;margin-top:8px;background:#fff3e0;border-radius:8px"><span style="font-size:2rem">📄</span><div style="font-size:0.8rem;color:#e65100;margin-top:4px">'+f.name+'</div></div>';
-      }
+    if(selectedFiles.length >= MAX_FILES){
+      showToast('최대 '+MAX_FILES+'개까지 업로드 가능합니다.','err');
+      el.value = '';
+      return;
     }
+    var f = el.files[0];
+    if(f.size > 5*1024*1024){
+      showToast('파일 크기가 5MB를 초과합니다.','err');
+      el.value = '';
+      return;
+    }
+    selectedFiles.push(f);
+    el.value = '';
+    renderFileList();
   }
+}
+function removeFile(idx){
+  selectedFiles.splice(idx, 1);
+  renderFileList();
+}
+function renderFileList(){
+  var area = $('fileListArea');
+  var countEl = $('fileCount');
+  if(!area) return;
+  if(selectedFiles.length === 0){
+    area.innerHTML = '';
+    if(countEl) countEl.textContent = '';
+    return;
+  }
+  var h = '';
+  for(var i=0;i<selectedFiles.length;i++){
+    var f = selectedFiles[i];
+    var icon = f.type.indexOf('image')>=0 ? '🖼️' : '📄';
+    h += '<div class="file-item">'
+      +'<span class="fi-icon">'+icon+'</span>'
+      +'<span class="fi-name">'+f.name+'</span>'
+      +'<button class="fi-remove" onclick="removeFile('+i+')">✕</button>'
+      +'</div>';
+  }
+  area.innerHTML = h;
+  if(countEl) countEl.textContent = selectedFiles.length+'/'+MAX_FILES+'개 선택됨';
 }
 
 // ===== 파일명 생성 (날짜_수취사_발행사_어음액) =====
@@ -1222,8 +1276,16 @@ function uploadFileToDrive(file, iq){
         body: JSON.stringify(payload),
         redirect: 'follow'
       });
-    }).then(function(r){ return r.json(); })
-    .then(function(res){
+    }).then(function(r){ return r.text(); })
+    .then(function(txt){
+      console.log('[uploadFileToDrive] raw response:', txt.substring(0, 200));
+      var res;
+      try { res = JSON.parse(txt); } catch(e){
+        console.error('[uploadFileToDrive] JSON parse failed:', e, 'raw:', txt.substring(0, 300));
+        // 파싱 실패해도 파일명은 알고 있으므로 부분 정보 반환
+        resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
+        return;
+      }
       if(res.success){
         resolve({
           fileName: driveFileName,
@@ -1232,9 +1294,15 @@ function uploadFileToDrive(file, iq){
           thumbnailUrl: res.thumbnailUrl || ''
         });
       } else {
-        reject(res.error || 'Upload failed');
+        console.error('[uploadFileToDrive] API error:', res.error);
+        // API 에러여도 파일이 Drive에 올라갔을 수 있으므로 파일명 보존
+        resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
       }
-    }).catch(reject);
+    }).catch(function(err){
+      console.error('[uploadFileToDrive] fetch error:', err);
+      // 네트워크 에러여도 파일명은 보존
+      resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
+    });
   });
 }
 
@@ -1253,7 +1321,7 @@ function doSaveAndEndorse(){
   }
 
   // 팝업으로 확인
-  pendingAccountData = { bankName:bankName, accountNo:accountNo, file:selectedFile };
+  pendingAccountData = { bankName:bankName, accountNo:accountNo, files:selectedFiles.slice() };
   $('confirmBank').textContent = bankName;
   $('confirmAccount').textContent = accountNo;
   $('btnAccountConfirm').disabled = false;
@@ -1275,21 +1343,38 @@ function doAccountConfirm(){
   var iq = allBills[currentIdx];
   var d = pendingAccountData;
 
-  function doSaveAccount(fileResult){
+  // 기존 첨부 데이터 파싱 (하위호환)
+  function parseExisting(val){
+    if(!val) return [];
+    try { var arr = JSON.parse(val); if(Array.isArray(arr)) return arr; } catch(e){}
+    return val ? [val] : [];
+  }
+
+  function doSaveAccount(fileResults){
     btn.textContent = '저장 중...';
+    var names, urls, types;
+    if(fileResults && fileResults.length > 0){
+      names = fileResults.map(function(r){ return r.fileName; });
+      urls = fileResults.map(function(r){ return r.fileUrl; });
+      types = fileResults.map(function(r){ return 'drive_link'; });
+    } else {
+      names = parseExisting(iq.attachmentName);
+      urls = parseExisting(iq.attachmentData);
+      types = parseExisting(iq.attachmentType);
+    }
     var payload = {
       action:'updateBill',
       uid:iq.uid,
       bankName:d.bankName,
       accountNo:d.accountNo,
-      attachmentName: fileResult ? fileResult.fileName : (iq.attachmentName||''),
-      attachmentData: fileResult ? fileResult.fileUrl : (iq.attachmentData||''),
-      attachmentType: fileResult ? 'drive_link' : (iq.attachmentType||''),
+      attachmentName: JSON.stringify(names),
+      attachmentData: JSON.stringify(urls),
+      attachmentType: JSON.stringify(types),
       status:'endorse',
       _slackText:'[배서 요청] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: ₩'+fmt(iq.billAmount)+'원'
     };
     return updateBillAPI(payload).then(function(){
-      selectedFile = null;
+      selectedFiles = [];
       return loadAll();
     }).then(function(){
       $('accountOverlay').classList.remove('show');
@@ -1300,13 +1385,27 @@ function doAccountConfirm(){
     });
   }
 
-  if(d.file){
-    btn.textContent = '파일 업로드 중...';
-    uploadFileToDrive(d.file, iq).then(function(result){
-      return doSaveAccount(result);
+  if(d.files && d.files.length > 0){
+    btn.textContent = '파일 업로드 중... (0/'+d.files.length+')';
+    var results = [];
+    var chain = Promise.resolve();
+    d.files.forEach(function(file, idx){
+      chain = chain.then(function(){
+        btn.textContent = '파일 업로드 중... ('+(idx+1)+'/'+d.files.length+')';
+        return uploadFileToDrive(file, iq);
+      }).then(function(result){
+        if(result) results.push(result);
+      });
+    });
+    chain.then(function(){
+      return doSaveAccount(results);
     }).catch(function(err){
-      console.warn('파일 업로드 실패, 계좌만 저장:', err);
-      doSaveAccount(null);
+      console.error('Upload chain error:', err);
+      if(results.length > 0){
+        doSaveAccount(results);
+      } else {
+        doSaveAccount(null);
+      }
     });
   } else {
     doSaveAccount(null).catch(function(err){
