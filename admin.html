@@ -1119,13 +1119,19 @@ function shareFile(fileName, fileUrl){
   }
 }
 
-// ===== 첨부파일 파싱 (하위호환: 단일문자열 ↔ JSON배열) =====
+// ===== 첨부파일 파싱 (하위호환: 단일문자열 ↔ JSON배열, URL 자동복구) =====
 function parseAttachments(name, data, type){
   function toArr(val){ if(!val) return []; try { var a=JSON.parse(val); if(Array.isArray(a)) return a; } catch(e){} return val?[val]:[]; }
+  function isDriveUrl(s){ return s && s.indexOf('drive.google.com')>=0; }
   var names=toArr(name), urls=toArr(data), types=toArr(type);
   var arr=[];
   for(var i=0;i<names.length;i++){
-    arr.push({ name:names[i]||'', url:urls[i]||'', type:types[i]||'' });
+    var n=names[i]||'', u=urls[i]||'', t=types[i]||'';
+    // name에 Drive URL이 들어있고 url이 비어있으면 → url로 이동
+    if(!u && isDriveUrl(n)){ u=n; n=n.replace(/.*\/d\/([^\/]+).*/, 'drive_file_$1'); t=t||'drive_link'; }
+    // url에 Drive URL이 있으면 type 보정
+    if(isDriveUrl(u) && !t) t='drive_link';
+    arr.push({ name:n, url:u, type:t });
   }
   return arr;
 }
