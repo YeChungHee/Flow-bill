@@ -13,12 +13,12 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .bar{height:3px;background:linear-gradient(90deg,#1565c0,#42a5f5);border-radius:2px;margin-bottom:20px}
 
 /* 대시보드 요약 카드 */
-.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.dash{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
 .dash-card{background:#fff;border-radius:10px;padding:12px 6px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
 .dash-card .num{font-size:1.35rem;font-weight:800;line-height:1.2}
 .dash-card .sub-amount{font-size:0.72rem;font-weight:600;margin-top:2px;line-height:1.3}
 .dash-card .label{font-size:0.62rem;color:#888;margin-top:4px}
-.c-total{color:#1565c0}.c-wait{color:#e65100}.c-prog{color:#7b1fa2}.c-cancel{color:#c62828}.c-done{color:#2e7d32}
+.c-total{color:#1565c0}.c-wait{color:#e65100}.c-prog{color:#7b1fa2}.c-cancel{color:#c62828}.c-reject{color:#880e4f}.c-done{color:#2e7d32}
 
 /* 필터 바 */
 .filter-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
@@ -66,6 +66,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 .badge-endorsed{background:#e0f2f1;color:#00695c}
 .badge-done{background:#e8f5e9;color:#2e7d32}
 .badge-cancel{background:#ffebee;color:#c62828}
+.badge-reject{background:#fce4ec;color:#880e4f}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
 .load-more-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px auto 0;padding:8px 24px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;font-size:0.78rem;color:#555;cursor:pointer;transition:background 0.2s}
 .load-more-btn:hover{background:#e8e8e8}
@@ -346,6 +347,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
       <div class="dash-card"><div class="num c-wait" id="dWait">0</div><div class="sub-amount" style="color:#e65100" id="dWaitAmt">0원</div><div class="label">대기</div></div>
       <div class="dash-card"><div class="num c-prog" id="dProg">0</div><div class="sub-amount" style="color:#7b1fa2" id="dProgAmt">0원</div><div class="label">진행중</div></div>
       <div class="dash-card"><div class="num c-cancel" id="dCancel">0</div><div class="sub-amount" style="color:#c62828" id="dCancelAmt">0원</div><div class="label">취소</div></div>
+      <div class="dash-card"><div class="num c-reject" id="dReject">0</div><div class="sub-amount" style="color:#880e4f" id="dRejectAmt">0원</div><div class="label">거절</div></div>
       <div class="dash-card"><div class="num c-done" id="dDone">0</div><div class="sub-amount" style="color:#2e7d32" id="dDoneAmt">0원</div><div class="label">완료</div></div>
     </div>
 
@@ -362,6 +364,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
           <option value="endorsed">배서완료</option>
           <option value="done">입금완료</option>
           <option value="cancel">취소</option>
+          <option value="reject">거절</option>
         </select>
         <select id="filterDateType" onchange="toggleDateRange();currentPage=1;renderList()">
           <option value="none">날짜검색</option>
@@ -751,34 +754,37 @@ function clearAllFilters(){
 
 // 상태 한글 매핑
 var STATUS_MAP = {
-  wait:'조건대기', select:'조건선택', input:'조건입력', endorse:'배서진행', endorsed:'배서완료', done:'입금완료', cancel:'취소'
+  wait:'조건대기', select:'조건선택', input:'조건입력', endorse:'배서진행', endorsed:'배서완료', done:'입금완료', cancel:'취소', reject:'거절'
 };
 function badgeClass(s){
-  return {wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel'}[s]||'badge-wait';
+  return {wait:'badge-wait',select:'badge-select',input:'badge-input',endorse:'badge-endorse',endorsed:'badge-endorsed',done:'badge-done',cancel:'badge-cancel',reject:'badge-reject'}[s]||'badge-wait';
 }
 
 // ===== 대시보드 렌더 =====
 function renderDashboard(){
   var data = isFilterActive() ? getFiltered() : allBills;
-  var wait=0,prog=0,cancel=0,totalAmt=0,waitAmt=0,progAmt=0,cancelAmt=0,doneAmt=0;
+  var wait=0,prog=0,cancel=0,reject=0,totalAmt=0,waitAmt=0,progAmt=0,cancelAmt=0,rejectAmt=0,doneAmt=0;
   data.forEach(function(x){
     var amt=x.billAmount||0;
     totalAmt+=amt;
     if(x.status==='wait'){wait++;waitAmt+=amt;}
     else if(x.status==='cancel'){cancel++;cancelAmt+=amt;}
+    else if(x.status==='reject'){reject++;rejectAmt+=amt;}
     else if(x.status==='done'){doneAmt+=amt;}
     else{prog++;progAmt+=amt;}
   });
-  var done=data.length-wait-prog-cancel;
+  var done=data.length-wait-prog-cancel-reject;
   $('dTotal').textContent = data.length;
   $('dWait').textContent = wait;
   $('dProg').textContent = prog;
   $('dCancel').textContent = cancel;
+  $('dReject').textContent = reject;
   $('dDone').textContent = done;
   $('dTotalAmt').textContent=fmtAmt(totalAmt);
   $('dWaitAmt').textContent=fmtAmt(waitAmt);
   $('dProgAmt').textContent=fmtAmt(progAmt);
   $('dCancelAmt').textContent=fmtAmt(cancelAmt);
+  $('dRejectAmt').textContent=fmtAmt(rejectAmt);
   $('dDoneAmt').textContent=fmtAmt(doneAmt);
 
   // 필터 표시기
@@ -887,7 +893,10 @@ function progressHTML(status){
   var steps = ['wait','select','input','endorse','endorsed','done'];
   var labels = ['조건대기','조건선택','조건입력','배서진행','배서완료','입금완료'];
   if(status==='cancel'){
-    return '<div class="progress-bar"><div class="step cancel" style="flex:1">취소됨</div></div>';
+    return '<div class="progress-bar"><div class="step cancel-s" style="flex:1">취소됨</div></div>';
+  }
+  if(status==='reject'){
+    return '<div class="progress-bar"><div class="step cancel-s" style="flex:1;background:#fce4ec;color:#880e4f">거절됨</div></div>';
   }
   var idx = steps.indexOf(status);
   return '<div class="progress-bar">'+steps.map(function(s,i){
@@ -1139,6 +1148,10 @@ function openModal(idx){
     html += '<div style="text-align:center;padding:20px;color:#c62828;font-size:0.92rem;font-weight:700">이 문의는 취소되었습니다.</div>';
     html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
   }
+  else if(st === 'reject'){
+    html += '<div style="text-align:center;padding:20px;color:#880e4f;font-size:0.92rem;font-weight:700">이 문의는 거절되었습니다.</div>';
+    html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
+  }
 
   $('modalBody').innerHTML = html;
   $('modalOverlay').classList.add('show');
@@ -1243,17 +1256,6 @@ function renderFileList(){
   if(countEl) countEl.textContent = selectedFiles.length+'/'+MAX_FILES+'개 선택됨';
 }
 
-// ===== 파일명 생성 (날짜_수취사_발행사_어음액) =====
-function buildFileName(iq, originalName){
-  var ext = originalName.lastIndexOf('.') >= 0 ? originalName.substring(originalName.lastIndexOf('.')) : '';
-  var d = new Date();
-  var dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  var apply = (iq.applyName||'수취사').replace(/[\/\\:*?"<>|]/g,'');
-  var issuer = (iq.issuerName||'발행사').replace(/[\/\\:*?"<>|]/g,'');
-  var amount = String(iq.billAmount||0).replace(/[^0-9]/g,'');
-  return dateStr+'_'+apply+'_'+issuer+'_'+amount+ext;
-}
-
 // ===== 파일을 base64로 변환 =====
 function fileToBase64(file){
   return new Promise(function(resolve,reject){
@@ -1264,17 +1266,19 @@ function fileToBase64(file){
   });
 }
 
-// ===== Google Drive에 파일 업로드 =====
-function uploadFileToDrive(file, iq){
+// ===== Google Drive에 파일 업로드 (원본 파일명 + GAS 내부 DB 저장) =====
+function uploadFileToDrive(file, iq, fileIndex){
   return new Promise(function(resolve,reject){
     if(!file){ resolve(null); return; }
-    var driveFileName = buildFileName(iq, file.name);
+    var originalName = file.name;
     fileToBase64(file).then(function(dataUrl){
       var payload = {
         action: 'uploadFile',
-        fileName: driveFileName,
+        fileName: originalName,
         mimeType: file.type,
-        fileData: dataUrl
+        fileData: dataUrl,
+        uid: iq.uid,
+        fileIndex: fileIndex || 0
       };
       return fetch(API_URL, {
         method: 'POST',
@@ -1287,27 +1291,24 @@ function uploadFileToDrive(file, iq){
       console.log('[uploadFileToDrive] raw response:', txt.substring(0, 200));
       var res;
       try { res = JSON.parse(txt); } catch(e){
-        console.error('[uploadFileToDrive] JSON parse failed:', e, 'raw:', txt.substring(0, 300));
-        // 파싱 실패해도 파일명은 알고 있으므로 부분 정보 반환
-        resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
+        console.warn('[uploadFileToDrive] JSON parse failed (GAS가 DB에 이미 저장함):', e.message);
+        resolve({ fileName: originalName, fileUrl: '', fileId: '', thumbnailUrl: '' });
         return;
       }
       if(res.success){
         resolve({
-          fileName: driveFileName,
+          fileName: originalName,
           fileUrl: res.fileUrl,
           fileId: res.fileId,
           thumbnailUrl: res.thumbnailUrl || ''
         });
       } else {
-        console.error('[uploadFileToDrive] API error:', res.error);
-        // API 에러여도 파일이 Drive에 올라갔을 수 있으므로 파일명 보존
-        resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
+        console.warn('[uploadFileToDrive] API error (GAS가 DB에 이미 저장했을 수 있음):', res.error);
+        resolve({ fileName: originalName, fileUrl: '', fileId: '', thumbnailUrl: '' });
       }
     }).catch(function(err){
-      console.error('[uploadFileToDrive] fetch error:', err);
-      // 네트워크 에러여도 파일명은 보존
-      resolve({ fileName: driveFileName, fileUrl: '', fileId: '', thumbnailUrl: '' });
+      console.warn('[uploadFileToDrive] fetch error (GAS가 DB에 이미 저장했을 수 있음):', err);
+      resolve({ fileName: originalName, fileUrl: '', fileId: '', thumbnailUrl: '' });
     });
   });
 }
@@ -1349,33 +1350,14 @@ function doAccountConfirm(){
   var iq = allBills[currentIdx];
   var d = pendingAccountData;
 
-  // 기존 첨부 데이터 파싱 (하위호환)
-  function parseExisting(val){
-    if(!val) return [];
-    try { var arr = JSON.parse(val); if(Array.isArray(arr)) return arr; } catch(e){}
-    return val ? [val] : [];
-  }
-
-  function doSaveAccount(fileResults){
+  // 계좌 + 상태만 저장 (첨부파일은 GAS uploadFile에서 이미 DB에 저장됨)
+  function doSaveBill(){
     btn.textContent = '저장 중...';
-    var names, urls, types;
-    if(fileResults && fileResults.length > 0){
-      names = fileResults.map(function(r){ return r.fileName; });
-      urls = fileResults.map(function(r){ return r.fileUrl; });
-      types = fileResults.map(function(r){ return 'drive_link'; });
-    } else {
-      names = parseExisting(iq.attachmentName);
-      urls = parseExisting(iq.attachmentData);
-      types = parseExisting(iq.attachmentType);
-    }
     var payload = {
       action:'updateBill',
       uid:iq.uid,
       bankName:d.bankName,
       accountNo:d.accountNo,
-      attachmentName: JSON.stringify(names),
-      attachmentData: JSON.stringify(urls),
-      attachmentType: JSON.stringify(types),
       status:'endorse',
       _slackText:'[배서 요청] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: ₩'+fmt(iq.billAmount)+'원'
     };
@@ -1393,28 +1375,22 @@ function doAccountConfirm(){
 
   if(d.files && d.files.length > 0){
     btn.textContent = '파일 업로드 중... (0/'+d.files.length+')';
-    var results = [];
     var chain = Promise.resolve();
     d.files.forEach(function(file, idx){
       chain = chain.then(function(){
         btn.textContent = '파일 업로드 중... ('+(idx+1)+'/'+d.files.length+')';
-        return uploadFileToDrive(file, iq);
-      }).then(function(result){
-        if(result) results.push(result);
+        return uploadFileToDrive(file, iq, idx);
       });
     });
     chain.then(function(){
-      return doSaveAccount(results);
+      return doSaveBill();
     }).catch(function(err){
       console.error('Upload chain error:', err);
-      if(results.length > 0){
-        doSaveAccount(results);
-      } else {
-        doSaveAccount(null);
-      }
+      // 업로드 실패해도 GAS가 일부 파일은 DB에 저장했을 수 있음 → 계좌/상태는 저장
+      doSaveBill();
     });
   } else {
-    doSaveAccount(null).catch(function(err){
+    doSaveBill().catch(function(err){
       console.error('Save error:', err);
       btn.disabled = false;
       btn.textContent = '입력완료';
