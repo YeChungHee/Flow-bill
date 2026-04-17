@@ -143,6 +143,8 @@ h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
 .btn-slack{background:linear-gradient(135deg,#611bb8,#7c4dff);color:#fff;box-shadow:0 4px 12px rgba(124,77,255,0.3)}
 .btn-deposit{background:linear-gradient(135deg,#00695c,#00897b);color:#fff;box-shadow:0 4px 12px rgba(0,105,92,0.3)}
 .btn-deposit:hover{transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#c62828,#e53935);color:#fff;box-shadow:0 4px 12px rgba(198,40,40,0.3)}
+.btn-danger:hover{transform:translateY(-1px)}
 
 /* 토스트 */
 .msg-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:0.88rem;font-weight:600;color:#fff;z-index:2000;display:none}
@@ -738,7 +740,8 @@ function openModal(idx){
     html += splitInputHTML(iq);
     html += '<div class="btn-row">'
       +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
-      +'<button class="btn btn-primary" onclick="doAdminSave()">완료 (신청자에게 전달)</button>'
+      +'<button class="btn btn-danger" onclick="doAdminReject()">거절</button>'
+      +'<button class="btn btn-primary" onclick="doAdminSave()">완료</button>'
       +'</div>';
   }
   else if(st==='select'){
@@ -1020,6 +1023,29 @@ function doConfirmSend(){
       $('confirmOverlay').classList.remove('show');
       pendingUpdateData = null;
       showToast('저장 완료 — 신청자에게 전달되었습니다.','ok');
+      closeModal();
+    });
+  });
+}
+
+// ===== 관리자 거절 (대기→취소) =====
+function doAdminReject(){
+  if(currentIdx<0) return;
+  var iq=list[currentIdx];
+  if(!confirm((iq.issuerName||'해당 문의')+'를 거절하시겠습니까?')) return;
+
+  var updateData = {
+    status: 'cancel',
+    processedAt: new Date().toLocaleString('ko-KR'),
+    _slackText: '[할인 거절] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: \u20a9'+fmt(iq.billAmount)+'원 \n관리자가 거절 처리하였습니다.'
+  };
+
+  updateBillAPI(iq.uid, updateData).then(function(){
+    loadAll().then(function(data){
+      list = data;
+      renderDashboard();
+      renderList();
+      showToast('거절 처리되었습니다.','err');
       closeModal();
     });
   });
