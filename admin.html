@@ -63,8 +63,13 @@ h1{text-align:center;color:#1565c0;font-size:1.15rem;padding:14px 0 4px}
 .badge-cancel{background:#ffebee;color:#c62828}
 .badge-reject{background:#fce4ec;color:#880e4f}
 .empty-msg{text-align:center;color:#bbb;padding:40px;font-size:0.82rem}
-.load-more-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:12px auto 0;padding:8px 24px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;font-size:0.78rem;color:#555;cursor:pointer;transition:background 0.2s}
+.load-more-btn{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px auto 0;padding:8px 24px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;font-size:0.78rem;color:#555;cursor:pointer;transition:background 0.2s}
 .load-more-btn:hover{background:#e8e8e8}
+.pagination{display:flex;align-items:center;justify-content:center;gap:4px;margin:12px 0 4px}
+.pg-btn{width:30px;height:30px;border:1.5px solid #ddd;border-radius:7px;background:#fff;font-size:0.78rem;color:#555;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;padding:0;font-weight:700}
+.pg-btn:hover:not(:disabled){background:#e3f2fd;border-color:#1565c0;color:#1565c0}
+.pg-btn:disabled{opacity:0.35;cursor:default}
+.pg-info{min-width:72px;text-align:center;font-size:0.8rem;font-weight:700;color:#333;padding:0 6px}
 
 /* 모달 */
 .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:1000;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto}
@@ -631,9 +636,10 @@ function shortDate(d){if(!d)return'-';var p=d.split('-');return p.length===3?(p[
 function renderList(){
   renderDashboard();
   var filtered=getFiltered();
-  var showCount = currentPage * PAGE_SIZE;
-  var visible = filtered.slice(0, showCount);
-  var remaining = filtered.length - visible.length;
+  var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  var visible = filtered.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+  var remaining = Math.max(0, filtered.length - currentPage*PAGE_SIZE);
 
   // 데스크톱 리스트
   var el=$('listBody');
@@ -682,11 +688,22 @@ function renderList(){
     }).join('');
   }
 
-  // 더보기 버튼
+  // 페이지 네비게이션 + 더보기 버튼
   var lmWrap=$('loadMoreWrap');
-  if(remaining>0){
+  if(filtered.length > 0){
     lmWrap.style.display='block';
-    lmWrap.innerHTML='<button class="load-more-btn" onclick="loadMore()">+ '+remaining+'건 더보기</button>';
+    var pageNav='';
+    if(totalPages>1){
+      pageNav='<div class="pagination">'
+        +'<button class="pg-btn" onclick="goPage(1)" '+(currentPage===1?'disabled':'')+' title="처음 페이지">|&#60;</button>'
+        +'<button class="pg-btn" onclick="goPage('+(currentPage-1)+')" '+(currentPage===1?'disabled':'')+' title="이전 페이지">&#60;</button>'
+        +'<span class="pg-info">'+currentPage+' / '+totalPages+'</span>'
+        +'<button class="pg-btn" onclick="goPage('+(currentPage+1)+')" '+(currentPage===totalPages?'disabled':'')+' title="다음 페이지">&#62;</button>'
+        +'<button class="pg-btn" onclick="goPage('+totalPages+')" '+(currentPage===totalPages?'disabled':'')+' title="마지막 페이지">&#62;|</button>'
+        +'</div>';
+    }
+    var moreBtn=remaining>0?'<button class="load-more-btn" onclick="loadMore()">+ '+remaining+'건 더보기</button>':'';
+    lmWrap.innerHTML=pageNav+moreBtn;
   } else {
     lmWrap.style.display='none';
     lmWrap.innerHTML='';
@@ -694,6 +711,12 @@ function renderList(){
 }
 function loadMore(){
   currentPage++;
+  renderList();
+}
+function goPage(n){
+  var filtered=getFiltered();
+  var totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));
+  currentPage=Math.max(1,Math.min(n,totalPages));
   renderList();
 }
 
