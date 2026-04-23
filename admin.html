@@ -745,6 +745,8 @@ function openModal(idx){
     // 할인 조건 입력 + 분할배서
     html += rateInputHTML(iq);
     html += splitInputHTML(iq);
+    // ✅ wait 상태에서도 첨부파일이 있으면 표시
+    html += applicantInfoHTML(iq);
     html += '<div class="btn-row">'
       +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
       +'<button class="btn btn-danger" onclick="doAdminReject()">거절</button>'
@@ -754,6 +756,8 @@ function openModal(idx){
   else if(st==='select'){
     html += discountReadHTML(iq);
     html += splitReadHTML(iq);
+    // ✅ select 상태에서도 첨부파일이 있으면 표시
+    html += applicantInfoHTML(iq);
     html += '<div style="text-align:center;padding:16px;color:#1565c0;font-size:0.85rem">신청자가 검토 중입니다. (취소 또는 진행요청 대기)</div>';
     html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
   }
@@ -1128,19 +1132,42 @@ function splitReadHTML(iq){
   return h;
 }
 
-// ===== 공유 링크 복사 =====
+// ===== 공유 링크 복사 (HTTPS/HTTP 모두 대응) =====
 function copyShareLink(url){
-  if(navigator.clipboard){
+  // 방법 1: clipboard API (HTTPS 필요)
+  if(navigator.clipboard && window.isSecureContext){
     navigator.clipboard.writeText(url).then(function(){
       showToast('링크가 복사되었습니다. 카톡 등에 붙여넣기 하세요.','ok');
+    }).catch(function(){
+      _fallbackCopy(url);
     });
   } else {
-    var t=document.createElement('textarea');
-    t.value=url;document.body.appendChild(t);
-    t.select();document.execCommand('copy');
-    document.body.removeChild(t);
-    showToast('링크가 복사되었습니다.','ok');
+    _fallbackCopy(url);
   }
+}
+// 방법 2: execCommand 폴백 (HTTP 환경, 구형 브라우저)
+function _fallbackCopy(url){
+  try {
+    var t=document.createElement('textarea');
+    t.value=url;
+    t.style.position='fixed';t.style.opacity='0';
+    document.body.appendChild(t);
+    t.focus();t.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(t);
+    if(ok){
+      showToast('링크가 복사되었습니다.','ok');
+    } else {
+      _showLinkPopup(url);
+    }
+  } catch(e){
+    _showLinkPopup(url);
+  }
+}
+// 방법 3: 링크 팝업 (복사 완전 실패 시 직접 선택)
+function _showLinkPopup(url){
+  var msg='아래 링크를 직접 복사해 주세요:\n\n'+url;
+  window.prompt('Drive 공유 링크', url);
 }
 
 // ===== 파일 공유 (모바일: 카카오톡/슬랙 등 앱 선택, PC: 링크 복사 폴백) =====
@@ -1150,7 +1177,10 @@ function shareFile(fileName, fileUrl){
       title: fileName,
       text: '[전자어음 첨부파일] ' + fileName,
       url: fileUrl
-    }).catch(function(){});
+    }).catch(function(e){
+      // 공유 취소 또는 미지원 → 링크 복사로 폴백
+      if(e.name !== 'AbortError') copyShareLink(fileUrl);
+    });
   } else {
     copyShareLink(fileUrl);
   }
@@ -1161,13 +1191,17 @@ function parseAttachments(name, data, type){
   function toArr(val){ if(!val) return []; try { var a=JSON.parse(val); if(Array.isArray(a)) return a; } catch(e){} return val?[val]:[]; }
   function isDriveUrl(s){ return s && s.indexOf('drive.google.com')>=0; }
   var names=toArr(name), urls=toArr(data), types=toArr(type);
+  // ✅ 수정: names/urls 중 더 긴 쪽 기준으로 순회 (URL만 있고 name이 없는 경우 누락 방지)
+  var len=Math.max(names.length, urls.length);
   var arr=[];
-  for(var i=0;i<names.length;i++){
+  for(var i=0;i<len;i++){
     var n=names[i]||'', u=urls[i]||'', t=types[i]||'';
     // name에 Drive URL이 들어있고 url이 비어있으면 → url로 이동
     if(!u && isDriveUrl(n)){ u=n; n=n.replace(/.*\/d\/([^\/]+).*/, 'drive_file_$1'); t=t||'drive_link'; }
     // url에 Drive URL이 있으면 type 보정
     if(isDriveUrl(u) && !t) t='drive_link';
+    // url도 name도 없는 항목은 제외
+    if(!n && !u) continue;
     arr.push({ name:n, url:u, type:t });
   }
   return arr;
