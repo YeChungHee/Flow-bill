@@ -645,12 +645,13 @@ function renderList(){
   var el=$('listBody');
   if(!filtered.length){el.innerHTML='<div class="empty-msg">조회된 문의가 없습니다.</div>';}
   else{
+    var pageOffset=(currentPage-1)*PAGE_SIZE;
     el.innerHTML=visible.map(function(iq,i){
       var st=STATUS_MAP[iq.status]||'대기';var bc=badgeClass(iq.status);
       var startDt=fixDate(iq.startDate)||'-';
       var rateStr=iq.rate?(iq.rate+'%'):'-';
       return '<div class="list-item" onclick="openModal('+iq._idx+')">'
-        +'<span class="no">'+(filtered.length-i)+'</span>'
+        +'<span class="no">'+(filtered.length-pageOffset-i)+'</span>'
         +'<span style="text-align:center"><span class="badge '+bc+'">'+st+'</span></span>'
         +'<span class="date">'+shortDate(startDt)+'</span>'
         +'<span class="company">'+(iq.applyName||'-')+'</span>'
