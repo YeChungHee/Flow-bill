@@ -315,7 +315,7 @@ li strong { color:#37474f; }
   <div class="hero">
     <h1>전자어음 할인 시스템 — 사용 가이드</h1>
     <p style="color:#fff">플로우파트너스 전자어음 할인 시스템 사용 가이드입니다.<br>신청자(고객사)와 관리자 각각의 역할별로 안내합니다.</p>
-    <span class="badge">v2.1 · 2026.04</span>
+    <span class="badge">v2.2 · 2026.04</span>
   </div>
 
   <!-- TOC -->
@@ -621,18 +621,20 @@ li strong { color:#37474f; }
 
       <h3>파일 저장 방식</h3>
       <ul>
-        <li>신청자 업로드 시 파일이 Google Drive 공유 폴더에 자동 저장됩니다.</li>
-        <li>파일명은 <strong>날짜_수취사_발행사_어음액.확장자</strong> 형식으로 자동 변환됩니다.</li>
+        <li>신청자 업로드 시 파일이 Google Drive 공유 폴더에 자동 저장되며, 해당 건의 <strong>첨부파일 URL이 시트에 함께 기록</strong>됩니다.</li>
+        <li>파일명은 신청자가 업로드한 <strong>원본 파일명</strong>이 그대로 사용됩니다.</li>
         <li>지원 형식: jpg, png, pdf (최대 5MB)</li>
+        <li>업로드된 파일은 <strong>"누구나 링크로 보기"</strong> 권한으로 자동 공유 설정됩니다.</li>
       </ul>
 
       <h3>관리자 상세 모달 — 첨부파일 영역</h3>
+      <p>신청자가 파일을 제출한 건은 모든 상태(대기·선택·입력·배서·완료)에서 첨부파일을 확인할 수 있습니다.</p>
       <table>
         <tr><th>버튼</th><th>기능</th></tr>
         <tr><td><strong>파일 보기</strong></td><td>새 탭에서 Google Drive 파일 열기</td></tr>
-        <tr><td><strong>링크 복사</strong></td><td>파일 공유 링크를 클립보드에 복사</td></tr>
+        <tr><td><strong>링크 복사</strong></td><td>파일 공유 링크를 클립보드에 복사 (HTTPS: 자동복사 / HTTP: 직접선택 팝업)</td></tr>
         <tr><td><strong>공유</strong></td><td>모바일: 카카오톡·슬랙 등 앱 선택 공유 / PC: 링크 복사</td></tr>
-        <tr><td><strong>Drive 폴더 열기</strong></td><td>파일 URL이 없는 기존 데이터의 경우, Drive 폴더로 이동</td></tr>
+        <tr><td><strong>Drive 폴더 열기</strong></td><td>URL이 없는 이전 데이터의 경우 Drive 폴더로 이동</td></tr>
       </table>
 
       <div class="tip">
@@ -652,6 +654,12 @@ li strong { color:#37474f; }
         <li><strong>10초 자동 갱신</strong>: 신청자/관리자 대시보드 모두 10초 간격으로 데이터 자동 업데이트</li>
         <li><strong>공휴일 반영</strong>: 만기일이 주말/공휴일인 경우 익영업일로 자동 조정 (2024~2027년 한국 공휴일 내장)</li>
         <li><strong>사업자번호 자동완성</strong>: 반복 신청 시 수취사/발행사 정보 자동 입력</li>
+      </ul>
+
+      <h3>Slack 알림</h3>
+      <ul>
+        <li>알림 채널: <strong>ebill-discount</strong></li>
+        <li>발송 시점: 할인 조건 전달 / 진행요청 / 배서 요청 / <strong>배서 완료 (첨부파일명 + Drive 링크 포함)</strong> / 입금 완료</li>
       </ul>
 
       <h3>데이터 보안</h3>
