@@ -73,10 +73,15 @@ function jsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ===== Slack 릴레이 (기존 기능 유지) =====
+// ===== Slack 릴레이 =====
 function sendSlack(text) {
   var webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
-  var payload = JSON.stringify({ text: text });
+  if (!webhookUrl) { Logger.log('SLACK_WEBHOOK_URL not set'); return; }
+  // ✅ 채널 ID 지정 (C08RFN00CBU)
+  var payload = JSON.stringify({
+    channel: 'C08RFN00CBU',
+    text: text
+  });
   var options = {
     method: 'post',
     contentType: 'application/json',
@@ -213,6 +218,57 @@ function doPost(e) {
       // 이미지인 경우 썸네일 URL 생성
       if (mimeType.indexOf('image') >= 0) {
         thumbnailUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+      }
+
+      // ✅ uid가 있으면 bill_data 시트의 attachmentData에 Drive URL 저장
+      var uid = body.uid || '';
+      var fileIndex = typeof body.fileIndex !== 'undefined' ? parseInt(body.fileIndex) : 0;
+      if (uid) {
+        try {
+          var sheet = getSheet('bill_data');
+          var rowNum = findRowByUid(sheet, uid);
+          if (rowNum > 0) {
+            var bHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+            var currentRow = sheet.getRange(rowNum, 1, 1, bHeaders.length).getValues()[0];
+            var nameIdx = bHeaders.indexOf('attachmentName');
+            var dataIdx = bHeaders.indexOf('attachmentData');
+            var typeIdx = bHeaders.indexOf('attachmentType');
+
+            function toArr(val){
+              if(!val) return [];
+              try { var a=JSON.parse(val); if(Array.isArray(a)) return a; } catch(e){}
+              return val ? [String(val)] : [];
+            }
+            var names = toArr(currentRow[nameIdx]);
+            var urls  = toArr(currentRow[dataIdx]);
+            var types = toArr(currentRow[typeIdx]);
+
+            // fileIndex 위치에 삽입
+            while(names.length <= fileIndex) names.push('');
+            while(urls.length  <= fileIndex) urls.push('');
+            while(types.length <= fileIndex) types.push('');
+            names[fileIndex] = fileName;
+            urls[fileIndex]  = fileUrl;
+            types[fileIndex] = 'drive_link';
+
+            // 빈 항목 제거
+            var cleanNames=[], cleanUrls=[], cleanTypes=[];
+            for(var ci=0; ci<names.length; ci++){
+              if(names[ci]){
+                cleanNames.push(names[ci]);
+                cleanUrls.push(urls[ci] || '');
+                cleanTypes.push(types[ci] || 'drive_link');
+              }
+            }
+
+            currentRow[nameIdx] = JSON.stringify(cleanNames);
+            currentRow[dataIdx] = JSON.stringify(cleanUrls);
+            currentRow[typeIdx] = JSON.stringify(cleanTypes);
+            sheet.getRange(rowNum, 1, 1, bHeaders.length).setValues([currentRow]);
+          }
+        } catch(dbErr) {
+          Logger.log('uploadFile DB update error: ' + dbErr);
+        }
       }
 
       return jsonResponse({

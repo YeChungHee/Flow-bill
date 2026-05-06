@@ -1386,17 +1386,17 @@ function doAccountConfirm(){
       _slackText:'[배서 요청] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: ₩'+fmt(iq.billAmount)+'원'
     };
 
-    // 업로드 결과에서 유효한 Drive URL이 있으면 attachmentData도 함께 전송
+    // 업로드 결과에서 파일명+URL 함께 저장 (파일명만 있어도 저장)
     if(uploadResults && uploadResults.length > 0){
       var names=[], urls=[], types=[];
       uploadResults.forEach(function(r){
-        if(r && r.fileUrl){
+        if(r && (r.fileUrl || r.fileName)){
           names.push(r.fileName || '');
-          urls.push(r.fileUrl);
+          urls.push(r.fileUrl || '');
           types.push('drive_link');
         }
       });
-      if(urls.length > 0){
+      if(names.length > 0){
         payload.attachmentName = JSON.stringify(names);
         payload.attachmentData = JSON.stringify(urls);
         payload.attachmentType = JSON.stringify(types);
