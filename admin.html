@@ -1223,7 +1223,7 @@ function doDepositComplete(){
   var updateData = {
     status: 'done',
     depositDate: depositDate,
-    _slackText: '[입금 완료] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n입금액: \u20a9'+fmt(iq.net)+'원 \n입금일: '+depositDate
+    _slackText: '[입금 완료]' + '\n발행사: '+iq.issuerName + '\n수취사: '+iq.applyName + '\n입금액: \u20a9'+fmt(iq.net)+'원' + '\n입금일: '+depositDate + '\n ' + '\n[배서 계좌]' + '\n은행명: '+(iq.endorseBankName||'-') + '\n예금주: '+(iq.endorseHolder||'-') + '\n계좌번호: '+(iq.endorseAccountNo||'-') + '\n실명번호: '+(iq.endorseIdNo||'-') + (iq.endorseBizType ? '\n사업자형태: '+iq.endorseBizType : '')
   };
 
   updateBillAPI(iq.uid, updateData).then(function(){
