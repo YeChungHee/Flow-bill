@@ -431,13 +431,7 @@ h1{text-align:center;color:#1565c0;font-size:1.3rem;padding:18px 0 6px}
 // ===== Config =====
 var API_URL = 'https://script.google.com/macros/s/AKfycbxLTGdKtQuX4hAG-rKuPDuuMoRB47uF-e4-PinBuAsyCc7MhxG-P1RUA1077N51kquxQw/exec';
 
-// 배서 계좌 정보 (고정)
-var ENDORSE_INFO = {
-  bank: '우리은행',
-  account: '1002-631-832129',
-  holder: '개인사업자 : (플로우렌트) 신인근',
-  idNo: '880708-1'
-};
+// 배서 계좌 정보: 동적 로드 (건별 endorseBankName 등 사용, 없으면 기존값 fallback)
 
 // ===== Utility =====
 function $(id){return document.getElementById(id)}
@@ -1073,13 +1067,18 @@ function copyShareLink(url){
 }
 
 // ===== 배서 계좌 정보 HTML =====
-function endorseHTML(showGuide){
+function endorseHTML(iq, showGuide){
+  iq = iq || {};
+  var bank    = iq.endorseBankName  || '우리은행';
+  var account = iq.endorseAccountNo || '1002-631-832129';
+  var holder  = iq.endorseHolder    || '개인사업자 : (플로우렌트) 신인근';
+  var idNo    = iq.endorseIdNo      || '880708-1';
   var title = showGuide ? '아래 계좌로 배서해 주세요' : '배서 계좌 정보';
   return '<div class="endorse-panel"><h3>'+title+'</h3>'
-    +'<div class="endorse-row"><span class="endorse-lbl">은행</span><span class="endorse-val">'+ENDORSE_INFO.bank+'</span></div>'
-    +'<div class="endorse-row"><span class="endorse-lbl">계좌번호</span><span class="endorse-val">'+ENDORSE_INFO.account+'</span></div>'
-    +'<div class="endorse-row"><span class="endorse-lbl">명의자</span><span class="endorse-val">'+ENDORSE_INFO.holder+'</span></div>'
-    +'<div class="endorse-row"><span class="endorse-lbl">실명번호</span><span class="endorse-val">'+ENDORSE_INFO.idNo+'</span></div>'
+    +'<div class="endorse-row"><span class="endorse-lbl">은행</span><span class="endorse-val">'+bank+'</span></div>'
+    +'<div class="endorse-row"><span class="endorse-lbl">계좌번호</span><span class="endorse-val">'+account+'</span></div>'
+    +'<div class="endorse-row"><span class="endorse-lbl">명의자</span><span class="endorse-val">'+holder+'</span></div>'
+    +'<div class="endorse-row"><span class="endorse-lbl">실명번호</span><span class="endorse-val">'+idNo+'</span></div>'
     +'</div>';
 }
 
@@ -1124,7 +1123,7 @@ function openModal(idx){
     html += discountHTML(iq);
     html += splitHTML(iq);
     // 배서 대상 계좌 안내
-    html += endorseHTML(true);
+    html += endorseHTML(iq, true);
     // 입력 폼
     html += '<div class="form-section" id="inputForm"><h3>입금 계좌 및 첨부파일</h3>'
       +'<div class="row2"><div class="field"><label>은행명</label><input type="text" id="fBankName" value="'+(iq.bankName||'')+'" placeholder="은행명 입력"></div>'
@@ -1144,7 +1143,7 @@ function openModal(idx){
     html += discountHTML(iq);
     html += splitHTML(iq);
     html += accountInfoHTML(iq);
-    html += endorseHTML();
+    html += endorseHTML(iq);
     html += '<div class="btn-row">'
       +'<button class="btn btn-success" onclick="doEndorseComplete()">배서완료</button>'
       +'</div>';
@@ -1153,7 +1152,7 @@ function openModal(idx){
     html += discountHTML(iq);
     html += splitHTML(iq);
     html += accountInfoHTML(iq);
-    html += endorseHTML();
+    html += endorseHTML(iq);
     html += '<div style="text-align:center;padding:20px;color:#00695c;font-size:0.92rem;font-weight:600">✅ 배서가 완료되었습니다.<br>입금 처리를 기다려주세요.</div>';
     html += '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">닫기</button></div>';
   }
@@ -1161,7 +1160,7 @@ function openModal(idx){
     html += discountHTML(iq);
     html += splitHTML(iq);
     html += accountInfoHTML(iq);
-    html += endorseHTML();
+    html += endorseHTML(iq);
     html += depositHTML(iq);
     html += '<div class="btn-row">'
       +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'

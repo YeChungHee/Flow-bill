@@ -11,7 +11,7 @@ var DRIVE_FOLDER_ID = '1EA4KCxRizzfxyw51iZI5lg2Ih8Tqc8R8';
 function setupHeaders() {
   var ss = SpreadsheetApp.openById(SS_ID);
 
-  // bill_data 헤더
+  // bill_data 헤더 (endorseBankName/endorseAccountNo/endorseHolder/endorseIdNo 포함)
   var billSheet = ss.getSheetByName('bill_data');
   var billHeaders = [
     'uid','timestamp','applyName','applyBiz','issuerName','issuerBiz',
@@ -20,7 +20,8 @@ function setupHeaders() {
     'splitEndorsement','splitCount','splitAmounts',
     'bankName','accountNo','attachmentName','attachmentData','attachmentType',
     'endorseCompleted','endorseCompletedAt',
-    'depositDate','cancelledAt'
+    'depositDate','cancelledAt',
+    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo'
   ];
   billSheet.getRange(1, 1, 1, billHeaders.length).setValues([billHeaders]);
   billSheet.getRange(1, 1, 1, billHeaders.length).setFontWeight('bold');
@@ -37,6 +38,32 @@ function setupHeaders() {
   userSheet.setFrozenRows(1);
 
   Logger.log('Headers setup complete');
+}
+
+// ===== app_config 시트 초기화 (최초 1회 실행) =====
+function setupAppConfig() {
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var sheet = ss.getSheetByName('app_config');
+  if (!sheet) {
+    sheet = ss.insertSheet('app_config');
+  }
+  var headers = ['key', 'value', 'updatedAt'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
+  // 기존 배서 계좌 기본값 입력
+  var initData = [
+    ['endorse_bankName',  '우리은행',                           new Date().toLocaleString('ko-KR')],
+    ['endorse_accountNo', '1002-631-832129',                    new Date().toLocaleString('ko-KR')],
+    ['endorse_holder',    '개인사업자 : (플로우렌트) 신인근',    new Date().toLocaleString('ko-KR')],
+    ['endorse_idNo',      '880708-1',                           new Date().toLocaleString('ko-KR')]
+  ];
+  // 기존 데이터가 없을 때만 초기값 입력
+  if (sheet.getLastRow() <= 1) {
+    sheet.getRange(2, 1, initData.length, 3).setValues(initData);
+  }
+  Logger.log('app_config setup complete');
 }
 
 // ===== 유틸리티 =====
@@ -122,6 +149,18 @@ function doGet(e) {
       }
     }
     return jsonResponse({ success: false, error: 'not found' });
+  }
+
+  // ---- app_config 조회 ----
+  if (action === 'getConfig') {
+    var sheet = getSheet('app_config');
+    if (!sheet) return jsonResponse({ success: false, error: 'app_config not found' });
+    var data = sheet.getDataRange().getValues();
+    var config = {};
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0]) config[data[i][0]] = String(data[i][1] || '');
+    }
+    return jsonResponse({ success: true, data: config });
   }
 
   // bill_data 특정 업체 조회
@@ -347,6 +386,30 @@ function doPost(e) {
     }
 
     return jsonResponse({ success: true, uid: uid });
+  }
+
+  // ---- app_config 저장/수정 ----
+  if (action === 'setConfig') {
+    var sheet = getSheet('app_config');
+    if (!sheet) return jsonResponse({ success: false, error: 'app_config not found' });
+    var data = sheet.getDataRange().getValues();
+    var updates = body.data || {};
+    var now = new Date().toLocaleString('ko-KR');
+    Object.keys(updates).forEach(function(key) {
+      var found = false;
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0] === key) {
+          sheet.getRange(i + 1, 2).setValue(updates[key]);
+          sheet.getRange(i + 1, 3).setValue(now);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        sheet.appendRow([key, updates[key], now]);
+      }
+    });
+    return jsonResponse({ success: true });
   }
 
   // ---- user_data: 사용자 추가/수정 (upsert by applyBiz) ----
