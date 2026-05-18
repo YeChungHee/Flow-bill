@@ -412,7 +412,7 @@ function doPin(){
     btn.disabled=true; btn.textContent='인증 중...';
     $('pinScreen').style.display = 'none';
     $('adminScreen').style.display = 'block';
-    Promise.all([loadAll(), loadEndorseConfig()]).then(function(results){
+    Promise.all([loadAll(), loadEndorseAccounts()]).then(function(results){
       list = results[0];
       renderDashboard();
       renderList();
@@ -521,36 +521,34 @@ var currentIdx = -1;
 var PAGE_SIZE = 30;
 var currentPage = 1;
 
-// ===== 배서 계좌 설정 (app_config에서 로드) =====
-var endorseConfig = { bankName:'', accountNo:'', holder:'', idNo:'' };
+// ===== 배서 계좌 목록 (endorse_accounts에서 로드) =====
+var endorseAccounts = []; // [{ label, bankName, accountNo, holder, idNo, bizType }, ...]
 
-function loadEndorseConfig(){
-  return fetch(API_URL+'?action=getConfig', { redirect:'follow' })
+function loadEndorseAccounts(){
+  return fetch(API_URL+'?action=getEndorseAccounts', { redirect:'follow' })
     .then(function(r){ return r.json(); })
     .then(function(res){
-      if(res.success && res.data){
-        endorseConfig.bankName  = res.data['endorse_bankName']  || '';
-        endorseConfig.accountNo = res.data['endorse_accountNo'] || '';
-        endorseConfig.holder    = res.data['endorse_holder']    || '';
-        endorseConfig.idNo      = res.data['endorse_idNo']      || '';
+      if(res.success && Array.isArray(res.data)){
+        endorseAccounts = res.data;
       }
-    }).catch(function(e){ console.warn('loadEndorseConfig error:', e); });
+    }).catch(function(e){ console.warn('loadEndorseAccounts error:', e); });
 }
 
-function saveEndorseConfig(bankName, accountNo, holder, idNo){
+function saveEndorseAccount(label, bankName, accountNo, holder, idNo, bizType){
   var payload = {
-    action: 'setConfig',
-    data: {
-      endorse_bankName:  bankName,
-      endorse_accountNo: accountNo,
-      endorse_holder:    holder,
-      endorse_idNo:      idNo
-    }
+    action: 'addEndorseAccount',
+    label: label, bankName: bankName, accountNo: accountNo,
+    holder: holder, idNo: idNo, bizType: bizType
   };
   return fetch(API_URL, {
     method:'POST', headers:{'Content-Type':'text/plain'},
     body: JSON.stringify(payload), redirect:'follow'
-  }).catch(function(e){ console.warn('saveEndorseConfig error:', e); });
+  }).then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res.success && res.mode==='added'){
+        endorseAccounts.push({ label:label, bankName:bankName, accountNo:accountNo, holder:holder, idNo:idNo, bizType:bizType });
+      }
+    }).catch(function(e){ console.warn('saveEndorseAccount error:', e); });
 }
 
 var STATUS_MAP = {wait:'조건대기',select:'조건선택',input:'조건입력',endorse:'배서진행',endorsed:'배서완료',done:'입금완료',cancel:'취소',reject:'거절'};
@@ -911,27 +909,78 @@ function getRecentRate(iq){
 function rateInputHTML(iq){
   var recentRate=getRecentRate(iq);
   var ph=recentRate!==null?(recentRate.toFixed(2)+'% 최근 할인율'):'예: 2.50';
-  var eb=endorseConfig.bankName||''; var ea=endorseConfig.accountNo||''; var eh=endorseConfig.holder||''; var ei=endorseConfig.idNo||'';
+  // 배서 계좌 드롭다운 옵션 생성
+  var selectOpts = '<option value="">-- 계좌 선택 또는 직접 입력 --</option>';
+  for(var i=0;i<endorseAccounts.length;i++){
+    var ea=endorseAccounts[i];
+    var lbl=ea.label||(ea.bankName+' '+ea.holder);
+    selectOpts += '<option value="'+i+'">'+lbl+'</option>';
+  }
+  selectOpts += '<option value="new">+ 직접 입력</option>';
   return '<div class="rate-section"><h3>할인 조건 입력</h3>'
     +'<div class="rate-row">'
     +'<div class="field"><label>월할인율 (%)</label><input type="number" id="aRate" step="0.01" placeholder="'+ph+'" oninput="calcAdmin()"></div>'
     +'<div class="field"><label>사용일수</label><input type="text" id="aDays" value="'+(iq.usageDays||'')+'" readonly></div>'
     +'</div>'
-    +'<div id="aCalcResult" style="display:none"><div class="result-panel">'
-    +'<div class="result-row"><span class="result-lbl">어음금액</span><span class="result-val" id="arAmount">-</span></div>'
-    +'<div class="result-row"><span class="result-lbl">할인액 (수수료 포함)</span><span class="result-val fee" id="arFee">-</span></div>'
-    +'<div class="result-row"><span class="result-lbl">입금액</span><span class="result-val net" id="arNet">-</span></div>'
+    +'<div id="calcResult" style="display:none" class="calc-result"></div>'
+    +'<div class="endorse-input-section"><h3>배서 계좌</h3>'
+    +'<div class="field"><label>저장된 계좌 선택</label>'
+    +'<select id="eiSelect" onchange="onEndorseSelect(this.value)" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem">'
+    +selectOpts
+    +'</select></div>'
+    +'<div id="eiInputArea" style="display:none">'
+    +'<div class="rate-row" style="margin-top:8px">'
+    +'<div class="field"><label>사업자형태</label>'
+    +'<div style="display:flex;gap:16px;padding:10px 0">'
+    +'<label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="eiBizType" value="개인" checked> 개인</label>'
+    +'<label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="radio" name="eiBizType" value="법인"> 법인</label>'
     +'</div></div>'
-    +'<div class="endorse-input-section"><h3>배서 계좌 <span style="font-size:0.75rem;font-weight:400;color:#888">(저장된 값 자동 불러옴)</span></h3>'
-    +'<div class="rate-row">'
-    +'<div class="field"><label>은행명</label><input type="text" id="eiBankName" value="'+eb+'" placeholder="예: 우리은행"></div>'
-    +'<div class="field"><label>예금주</label><input type="text" id="eiHolder" value="'+eh+'" placeholder="예: 홍길동"></div>'
+    +'<div class="field"><label>별칭 <span style="font-size:0.75rem;color:#aaa">(목록 표시명)</span></label>'
+    +'<input type="text" id="eiLabel" placeholder="예: 우리-신인근(개인)"></div>'
     +'</div>'
     +'<div class="rate-row">'
-    +'<div class="field"><label>계좌번호</label><input type="text" id="eiAccountNo" value="'+ea+'" placeholder="예: 1002-631-832129"></div>'
-    +'<div class="field"><label>실명번호</label><input type="text" id="eiIdNo" value="'+ei+'" placeholder="예: 880708-1"></div>'
-    +'</div></div>'
+    +'<div class="field"><label>은행명</label><input type="text" id="eiBankName" placeholder="예: 우리은행"></div>'
+    +'<div class="field"><label>예금주</label><input type="text" id="eiHolder" placeholder="예: 홍길동"></div>'
+    +'</div>'
+    +'<div class="rate-row">'
+    +'<div class="field"><label>계좌번호</label><input type="text" id="eiAccountNo" placeholder="예: 1002-631-832129"></div>'
+    +'<div class="field"><label>실명번호</label><input type="text" id="eiIdNo" placeholder="예: 880708-1"></div>'
+    +'</div>'
+    +'</div>'
+    +'</div>'
     +'</div>';
+}
+
+function onEndorseSelect(val){
+  var area = document.getElementById('eiInputArea');
+  if(!area) return;
+  if(val === 'new'){
+    // 직접 입력: 필드 초기화 후 표시
+    area.style.display = 'block';
+    ['eiBankName','eiHolder','eiAccountNo','eiIdNo','eiLabel'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.value='';
+    });
+    var radios = document.getElementsByName('eiBizType');
+    if(radios.length) radios[0].checked = true;
+  } else if(val !== ''){
+    // 저장된 계좌 선택: 필드 자동 채움
+    var idx = parseInt(val);
+    var acc = endorseAccounts[idx];
+    if(!acc) return;
+    area.style.display = 'block';
+    var lbl = document.getElementById('eiLabel');    if(lbl) lbl.value = acc.label||'';
+    var bn  = document.getElementById('eiBankName'); if(bn)  bn.value  = acc.bankName||'';
+    var hn  = document.getElementById('eiHolder');   if(hn)  hn.value  = acc.holder||'';
+    var an  = document.getElementById('eiAccountNo');if(an)  an.value  = acc.accountNo||'';
+    var idn = document.getElementById('eiIdNo');     if(idn) idn.value = acc.idNo||'';
+    var radios = document.getElementsByName('eiBizType');
+    for(var r=0;r<radios.length;r++){
+      radios[r].checked = (radios[r].value === (acc.bizType||'개인'));
+    }
+  } else {
+    // 선택 안함
+    area.style.display = 'none';
+  }
 }
 
 function calcAdmin(){
@@ -1048,17 +1097,22 @@ function doAdminSave(){
     }
   }
 
-  // 배서 계좌 입력값 수집 및 자동 저장
-  var newBankName  = ($('eiBankName')  ? $('eiBankName').value.trim()  : '') || endorseConfig.bankName;
-  var newAccountNo = ($('eiAccountNo') ? $('eiAccountNo').value.trim() : '') || endorseConfig.accountNo;
-  var newHolder    = ($('eiHolder')    ? $('eiHolder').value.trim()    : '') || endorseConfig.holder;
-  var newIdNo      = ($('eiIdNo')      ? $('eiIdNo').value.trim()      : '') || endorseConfig.idNo;
-
-  if(newBankName!==endorseConfig.bankName || newAccountNo!==endorseConfig.accountNo ||
-     newHolder!==endorseConfig.holder || newIdNo!==endorseConfig.idNo){
-    endorseConfig.bankName=newBankName; endorseConfig.accountNo=newAccountNo;
-    endorseConfig.holder=newHolder; endorseConfig.idNo=newIdNo;
-    saveEndorseConfig(newBankName, newAccountNo, newHolder, newIdNo);
+  // 배서 계좌 수집 (드롭다운 선택 또는 직접 입력)
+  var newBankName  = ($('eiBankName')  ? $('eiBankName').value.trim()  : '');
+  var newAccountNo = ($('eiAccountNo') ? $('eiAccountNo').value.trim() : '');
+  var newHolder    = ($('eiHolder')    ? $('eiHolder').value.trim()    : '');
+  var newIdNo      = ($('eiIdNo')      ? $('eiIdNo').value.trim()      : '');
+  var newLabel     = ($('eiLabel')     ? $('eiLabel').value.trim()     : '');
+  var bizTypeRadios = document.getElementsByName('eiBizType');
+  var newBizType = '개인';
+  for(var ri=0;ri<bizTypeRadios.length;ri++){
+    if(bizTypeRadios[ri].checked){ newBizType = bizTypeRadios[ri].value; break; }
+  }
+  // 신규 계좌이면 자동 저장
+  var selectEl = $('eiSelect');
+  var isNew = selectEl && (selectEl.value === 'new');
+  if(isNew && newBankName && newAccountNo){
+    saveEndorseAccount(newLabel, newBankName, newAccountNo, newHolder, newIdNo, newBizType);
   }
 
   // 전송 데이터 임시 저장
@@ -1075,6 +1129,7 @@ function doAdminSave(){
     endorseAccountNo: newAccountNo,
     endorseHolder:    newHolder,
     endorseIdNo:      newIdNo,
+    endorseBizType:   newBizType,
     _slackText: '[할인 조건 전달] \n발행사: '+iq.issuerName+' \n수취사: '+iq.applyName+' \n어음: \u20a9'+fmt(iq.billAmount)+'원 \n할인율: '+rate+'% | 할인액: \u20a9'+fmt(fee)+'원\n입금액: \u20a9'+fmt(net)+'원'
   };
 

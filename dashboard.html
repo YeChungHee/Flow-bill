@@ -1073,8 +1073,11 @@ function endorseHTML(iq, showGuide){
   var account = iq.endorseAccountNo || '1002-631-832129';
   var holder  = iq.endorseHolder    || '개인사업자 : (플로우렌트) 신인근';
   var idNo    = iq.endorseIdNo      || '880708-1';
+  var bizType = iq.endorseBizType   || '';
   var title = showGuide ? '아래 계좌로 배서해 주세요' : '배서 계좌 정보';
+  var bizRow = bizType ? ('<div class="endorse-row"><span class="endorse-lbl">사업자형태</span><span class="endorse-val">'+bizType+'</span></div>') : '';
   return '<div class="endorse-panel"><h3>'+title+'</h3>'
+    +bizRow
     +'<div class="endorse-row"><span class="endorse-lbl">은행</span><span class="endorse-val">'+bank+'</span></div>'
     +'<div class="endorse-row"><span class="endorse-lbl">계좌번호</span><span class="endorse-val">'+account+'</span></div>'
     +'<div class="endorse-row"><span class="endorse-lbl">명의자</span><span class="endorse-val">'+holder+'</span></div>'

@@ -1,6 +1,6 @@
 /* ===== e_bill GAS API =====
    Google Sheets 기반 전자어음 할인 CRUD API
-   시트: bill_data, user_data, app_config
+   시트: bill_data, user_data, app_config, endorse_accounts
    배포: 웹 앱(누구나 접근 가능)
 */
 
@@ -21,7 +21,7 @@ function fixHeaders() {
     'bankName','accountNo','attachmentName','attachmentData','attachmentType',
     'endorseCompleted','endorseCompletedAt',
     'depositDate','cancelledAt',
-    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo'
+    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo','endorseBizType'
   ];
 
   var lastCol = billSheet.getLastColumn();
@@ -50,7 +50,7 @@ function setupHeaders() {
     'bankName','accountNo','attachmentName','attachmentData','attachmentType',
     'endorseCompleted','endorseCompletedAt',
     'depositDate','cancelledAt',
-    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo'
+    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo','endorseBizType'
   ];
   billSheet.getRange(1, 1, 1, billHeaders.length).setValues([billHeaders]);
   billSheet.getRange(1, 1, 1, billHeaders.length).setFontWeight('bold');
@@ -67,6 +67,26 @@ function setupHeaders() {
   userSheet.setFrozenRows(1);
 
   Logger.log('Headers setup complete');
+}
+
+// ===== endorse_accounts 시트 초기화 (최초 1회 실행) =====
+function setupEndorseAccounts() {
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var sheet = ss.getSheetByName('endorse_accounts');
+  if (!sheet) {
+    sheet = ss.insertSheet('endorse_accounts');
+  }
+  var headers = ['label','bankName','accountNo','holder','idNo','bizType','createdAt'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+  sheet.setFrozenRows(1);
+
+  // 기존 계좌 기본값 1건 입력 (시트가 비어있을 때만)
+  if (sheet.getLastRow() <= 1) {
+    var now = new Date().toLocaleString('ko-KR');
+    sheet.appendRow(['우리-신인근(개인)', '우리은행', '1002-631-832129', '신인근', '880708-1', '개인', now]);
+  }
+  Logger.log('endorse_accounts setup complete');
 }
 
 // ===== app_config 시트 초기화 (최초 1회 실행) =====
@@ -177,6 +197,14 @@ function doGet(e) {
       }
     }
     return jsonResponse({ success: false, error: 'not found' });
+  }
+
+  // 배서 계좌 목록 조회
+  if (action === 'getEndorseAccounts') {
+    var sheet = getSheet('endorse_accounts');
+    if (!sheet) return jsonResponse({ success: true, data: [] });
+    var rows = sheetToJson(sheet);
+    return jsonResponse({ success: true, data: rows });
   }
 
   // app_config 조회
@@ -341,6 +369,31 @@ function doPost(e) {
     } catch (err) {
       return jsonResponse({ success: false, error: err.toString() });
     }
+  }
+
+  // ---- 배서 계좌 신규 저장 ----
+  if (action === 'addEndorseAccount') {
+    var sheet = getSheet('endorse_accounts');
+    if (!sheet) return jsonResponse({ success: false, error: 'endorse_accounts not found' });
+    var label    = body.label    || '';
+    var bankName = body.bankName || '';
+    var accountNo= body.accountNo|| '';
+    var holder   = body.holder   || '';
+    var idNo     = body.idNo     || '';
+    var bizType  = body.bizType  || '';
+    if (!bankName || !accountNo) {
+      return jsonResponse({ success: false, error: 'bankName and accountNo required' });
+    }
+    // 동일 계좌번호 중복 체크
+    var existing = sheetToJson(sheet);
+    for (var i = 0; i < existing.length; i++) {
+      if (existing[i].accountNo === accountNo) {
+        return jsonResponse({ success: true, mode: 'exists', data: existing[i] });
+      }
+    }
+    var now = new Date().toLocaleString('ko-KR');
+    sheet.appendRow([label, bankName, accountNo, holder, idNo, bizType, now]);
+    return jsonResponse({ success: true, mode: 'added' });
   }
 
   // ---- bill_data: 새 건 추가 ----
