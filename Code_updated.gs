@@ -7,6 +7,23 @@
 var SS_ID = '1pNalg-uJjSsyy6CuILndc2VYc9IFnHCUXbf8kQlY5Uw';
 var DRIVE_FOLDER_ID = '1EA4KCxRizzfxyw51iZI5lg2Ih8Tqc8R8';
 
+// ===== [진단] 실제 컬럼 순서 확인 — 실행 후 로그 확인 =====
+function checkBillData() {
+  var sheet = SpreadsheetApp.openById(SS_ID).getSheetByName('bill_data');
+  var data = sheet.getDataRange().getValues();
+
+  Logger.log('=== HEADERS (' + data[0].length + '개) ===');
+  Logger.log(JSON.stringify(data[0]));
+
+  for (var i = 1; i <= Math.min(3, data.length - 1); i++) {
+    Logger.log('=== ROW ' + i + ' ===');
+    var row = data[i];
+    for (var j = 0; j < data[0].length; j++) {
+      Logger.log('col' + j + ' | ' + data[0][j] + ' | ' + row[j]);
+    }
+  }
+}
+
 // ===== [긴급복구] 헤더 복원 — 데이터 오류 시 1회 실행 =====
 function fixHeaders() {
   var ss = SpreadsheetApp.openById(SS_ID);
@@ -14,11 +31,11 @@ function fixHeaders() {
 
   // 기존 실제 컬럼 순서 그대로 복원 (applyName 제거) + 배서 4개 컬럼 끝에 추가
   var correctHeaders = [
-    'uid','timestamp','applyBiz','issuerName','issuerBiz',
-    'billAmount','billDue','startDate','usageDays','status',
-    'rate','fee','net','processedAt',
-    'splitEndorsement','splitCount','splitAmounts',
-    'bankName','accountNo','attachmentName','attachmentData','attachmentType',
+    'uid','timestamp','applyName','applyBiz','issuerName','issuerBiz',
+    'billAmount','net','fee','billDue','usageDays',
+    'rate','bankName','accountNo','processedAt',
+    'status','startDate','splitEndorsement','splitCount','splitAmounts',
+    'attachmentName','attachmentData','attachmentType',
     'endorseCompleted','endorseCompletedAt',
     'depositDate','cancelledAt',
     'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo','endorseBizType'
@@ -43,11 +60,11 @@ function setupHeaders() {
   // bill_data 헤더 — 기존 컬럼 순서 유지 + 배서 4개 컬럼 끝에 추가
   var billSheet = ss.getSheetByName('bill_data');
   var billHeaders = [
-    'uid','timestamp','applyBiz','issuerName','issuerBiz',
-    'billAmount','billDue','startDate','usageDays','status',
-    'rate','fee','net','processedAt',
-    'splitEndorsement','splitCount','splitAmounts',
-    'bankName','accountNo','attachmentName','attachmentData','attachmentType',
+    'uid','timestamp','applyName','applyBiz','issuerName','issuerBiz',
+    'billAmount','net','fee','billDue','usageDays',
+    'rate','bankName','accountNo','processedAt',
+    'status','startDate','splitEndorsement','splitCount','splitAmounts',
+    'attachmentName','attachmentData','attachmentType',
     'endorseCompleted','endorseCompletedAt',
     'depositDate','cancelledAt',
     'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo','endorseBizType'
