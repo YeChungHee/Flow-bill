@@ -1,20 +1,49 @@
 /* ===== e_bill GAS API =====
    Google Sheets 기반 전자어음 할인 CRUD API
-   시트: bill_data, user_data
+   시트: bill_data, user_data, app_config
    배포: 웹 앱(누구나 접근 가능)
 */
 
 var SS_ID = '1pNalg-uJjSsyy6CuILndc2VYc9IFnHCUXbf8kQlY5Uw';
 var DRIVE_FOLDER_ID = '1EA4KCxRizzfxyw51iZI5lg2Ih8Tqc8R8';
 
-// ===== 헤더 초기화 (최초 1회 실행) =====
+// ===== [긴급복구] 헤더 복원 — 데이터 오류 시 1회 실행 =====
+function fixHeaders() {
+  var ss = SpreadsheetApp.openById(SS_ID);
+  var billSheet = ss.getSheetByName('bill_data');
+
+  // 기존 실제 컬럼 순서 그대로 복원 (applyName 제거) + 배서 4개 컬럼 끝에 추가
+  var correctHeaders = [
+    'uid','timestamp','applyBiz','issuerName','issuerBiz',
+    'billAmount','billDue','startDate','usageDays','status',
+    'rate','fee','net','processedAt',
+    'splitEndorsement','splitCount','splitAmounts',
+    'bankName','accountNo','attachmentName','attachmentData','attachmentType',
+    'endorseCompleted','endorseCompletedAt',
+    'depositDate','cancelledAt',
+    'endorseBankName','endorseAccountNo','endorseHolder','endorseIdNo'
+  ];
+
+  var lastCol = billSheet.getLastColumn();
+  var writeLen = Math.max(correctHeaders.length, lastCol);
+  // 기존 컬럼보다 짧아지는 경우 빈 문자열로 채워 기존 헤더 지우기
+  var headerRow = correctHeaders.concat(
+    new Array(Math.max(0, writeLen - correctHeaders.length)).fill('')
+  );
+  billSheet.getRange(1, 1, 1, writeLen).setValues([headerRow]);
+  billSheet.getRange(1, 1, 1, correctHeaders.length).setFontWeight('bold');
+
+  Logger.log('fixHeaders complete. lastCol=' + lastCol + ', written=' + writeLen);
+}
+
+// ===== 헤더 초기화 (최초 1회 실행, 신규 시트 생성 시에만 사용) =====
 function setupHeaders() {
   var ss = SpreadsheetApp.openById(SS_ID);
 
-  // bill_data 헤더 (endorseBankName/endorseAccountNo/endorseHolder/endorseIdNo 포함)
+  // bill_data 헤더 — 기존 컬럼 순서 유지 + 배서 4개 컬럼 끝에 추가
   var billSheet = ss.getSheetByName('bill_data');
   var billHeaders = [
-    'uid','timestamp','applyName','applyBiz','issuerName','issuerBiz',
+    'uid','timestamp','applyBiz','issuerName','issuerBiz',
     'billAmount','billDue','startDate','usageDays','status',
     'rate','fee','net','processedAt',
     'splitEndorsement','splitCount','splitAmounts',
@@ -54,10 +83,10 @@ function setupAppConfig() {
 
   // 기존 배서 계좌 기본값 입력
   var initData = [
-    ['endorse_bankName',  '우리은행',                           new Date().toLocaleString('ko-KR')],
-    ['endorse_accountNo', '1002-631-832129',                    new Date().toLocaleString('ko-KR')],
-    ['endorse_holder',    '개인사업자 : (플로우렌트) 신인근',    new Date().toLocaleString('ko-KR')],
-    ['endorse_idNo',      '880708-1',                           new Date().toLocaleString('ko-KR')]
+    ['endorse_bankName',  '우리은행',                                    new Date().toLocaleString('ko-KR')],
+    ['endorse_accountNo', '1002-631-832129',                                              new Date().toLocaleString('ko-KR')],
+    ['endorse_holder',    '개인사업자 : (플로우렌트) 신인근', new Date().toLocaleString('ko-KR')],
+    ['endorse_idNo',      '880708-1',                                                     new Date().toLocaleString('ko-KR')]
   ];
   // 기존 데이터가 없을 때만 초기값 입력
   if (sheet.getLastRow() <= 1) {
@@ -104,7 +133,6 @@ function jsonResponse(data) {
 function sendSlack(text) {
   var webhookUrl = PropertiesService.getScriptProperties().getProperty('SLACK_WEBHOOK_URL') || '';
   if (!webhookUrl) { Logger.log('SLACK_WEBHOOK_URL not set'); return; }
-  // ✅ 채널 ID 지정 (C08RFN00CBU)
   var payload = JSON.stringify({
     channel: 'C08RFN00CBU',
     text: text
@@ -151,7 +179,7 @@ function doGet(e) {
     return jsonResponse({ success: false, error: 'not found' });
   }
 
-  // ---- app_config 조회 ----
+  // app_config 조회
   if (action === 'getConfig') {
     var sheet = getSheet('app_config');
     if (!sheet) return jsonResponse({ success: false, error: 'app_config not found' });
@@ -190,7 +218,7 @@ function doGet(e) {
     var bizClean = biz.replace(/[^0-9]/g,'');
     for (var i = 0; i < users.length; i++) {
       if ((users[i].applyBiz||'').replace(/[^0-9]/g,'') === bizClean) {
-        // pinNo가 없으면 기본값 '0000' 자동 설정
+        // pinNo가 없으면 기본값 '000000' 자동 설정
         if (!users[i].pinNo) {
           var rawData = userSheet.getDataRange().getValues();
           var rawHeaders = rawData[0];
@@ -229,37 +257,31 @@ function doPost(e) {
     try {
       var fileName = body.fileName || 'attachment';
       var mimeType = body.mimeType || 'application/octet-stream';
-      var base64Data = body.fileData; // Base64 인코딩된 파일 데이터 (dataUrl 또는 raw base64)
+      var base64Data = body.fileData;
 
       if (!base64Data) {
         return jsonResponse({ success: false, error: 'No file data' });
       }
 
-      // dataUrl 형식이면 헤더 제거 (data:application/pdf;base64,XXXX → XXXX)
+      // dataUrl 형식이면 헤더 제거
       if (base64Data.indexOf('base64,') >= 0) {
         base64Data = base64Data.split('base64,')[1];
       }
 
-      // Base64 디코딩 → Blob 생성
       var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
-
-      // Google Drive 폴더에 저장
       var folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
       var file = folder.createFile(blob);
-
-      // 누구나 링크로 보기 가능하도록 공유 설정
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
       var fileId = file.getId();
       var fileUrl = 'https://drive.google.com/file/d/' + fileId + '/view';
       var thumbnailUrl = '';
 
-      // 이미지인 경우 썸네일 URL 생성
       if (mimeType.indexOf('image') >= 0) {
         thumbnailUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
       }
 
-      // ✅ uid가 있으면 bill_data 시트의 attachmentData에 Drive URL 저장
+      // uid가 있으면 bill_data 시트의 attachment 컬럼에 Drive URL 저장
       var uid = body.uid || '';
       var fileIndex = typeof body.fileIndex !== 'undefined' ? parseInt(body.fileIndex) : 0;
       if (uid) {
@@ -282,7 +304,6 @@ function doPost(e) {
             var urls  = toArr(currentRow[dataIdx]);
             var types = toArr(currentRow[typeIdx]);
 
-            // fileIndex 위치에 삽입
             while(names.length <= fileIndex) names.push('');
             while(urls.length  <= fileIndex) urls.push('');
             while(types.length <= fileIndex) types.push('');
@@ -290,7 +311,6 @@ function doPost(e) {
             urls[fileIndex]  = fileUrl;
             types[fileIndex] = 'drive_link';
 
-            // 빈 항목 제거
             var cleanNames=[], cleanUrls=[], cleanTypes=[];
             for(var ci=0; ci<names.length; ci++){
               if(names[ci]){
@@ -330,7 +350,6 @@ function doPost(e) {
     var row = headers.map(function(h) { return body[h] || ''; });
     sheet.appendRow(row);
 
-    // Slack 알림
     if (body._slackText) {
       sendSlack(body._slackText);
     }
@@ -351,8 +370,8 @@ function doPost(e) {
       if (!exists && bizClean) {
         var newRow = userHeaders.map(function(h) { return ''; });
         newRow[userHeaders.indexOf('applyName')] = body.applyName || '';
-        newRow[userHeaders.indexOf('applyBiz')] = body.applyBiz || '';
-        newRow[userHeaders.indexOf('pinNo')] = '000000';
+        newRow[userHeaders.indexOf('applyBiz')]  = body.applyBiz  || '';
+        newRow[userHeaders.indexOf('pinNo')]      = '000000';
         newRow[userHeaders.indexOf('createdAt')] = new Date().toLocaleString('ko-KR');
         userSheet.appendRow(newRow);
       }
@@ -380,7 +399,6 @@ function doPost(e) {
     }
     sheet.getRange(rowNum, 1, 1, headers.length).setValues([currentRow]);
 
-    // Slack 알림
     if (body._slackText) {
       sendSlack(body._slackText);
     }
@@ -418,7 +436,6 @@ function doPost(e) {
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var biz = body.applyBiz || '';
 
-    // 기존 사용자 찾기
     var data = sheet.getDataRange().getValues();
     var bizIdx = headers.indexOf('applyBiz');
     var existRow = -1;
@@ -430,7 +447,6 @@ function doPost(e) {
     }
 
     if (existRow > 0) {
-      // 수정
       var currentRow = sheet.getRange(existRow, 1, 1, headers.length).getValues()[0];
       for (var i = 0; i < headers.length; i++) {
         if (body.hasOwnProperty(headers[i])) {
@@ -441,7 +457,6 @@ function doPost(e) {
       sheet.getRange(existRow, 1, 1, headers.length).setValues([currentRow]);
       return jsonResponse({ success: true, mode: 'update' });
     } else {
-      // 추가
       body.userId = body.userId || ('U-' + Date.now());
       body.createdAt = new Date().toLocaleString('ko-KR');
       body.updatedAt = body.createdAt;
