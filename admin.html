@@ -836,6 +836,7 @@ function openModal(idx){
     html += discountReadHTML(iq);
     html += splitReadHTML(iq);
     html += applicantInfoHTML(iq);
+    html += endorseAccountInfoHTML(iq);
     html += '<div style="text-align:center;padding:12px;color:#00695c;font-size:0.88rem;font-weight:700">✅ 신청자가 배서를 완료했습니다.</div>';
     html += '<div class="btn-row">'
       +'<button class="btn btn-secondary" onclick="closeModal()">닫기</button>'
@@ -846,6 +847,7 @@ function openModal(idx){
     html += discountReadHTML(iq);
     html += splitReadHTML(iq);
     html += applicantInfoHTML(iq);
+    html += endorseAccountInfoHTML(iq);
     if(iq.depositDate){
       html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:14px;padding:16px;margin-bottom:16px;text-align:center">'
         +'<div style="font-size:0.82rem;color:#666">입금완료일</div>'
@@ -1274,6 +1276,25 @@ function splitReadHTML(iq){
   return h;
 }
 
+
+// ===== 배서 계좌 정보 읽기 (관리자 등록) =====
+function endorseAccountInfoHTML(iq){
+  var bk      = iq.endorseBankName  || '';
+  var ac      = iq.endorseAccountNo || '';
+  var holder  = iq.endorseHolder    || '';
+  var idNo    = iq.endorseIdNo      || '';
+  var bizType = iq.endorseBizType   || '';
+  if(!bk && !ac) return '';
+  var h = '<div class="applicant-info" style="background:#f1f8e9;border:1.5px solid #aed581;">'
+    + '<h3 style="color:#33691e;margin-bottom:10px">배서 계좌 정보</h3>';
+  if(bizType) h += '<div class="ai-row"><span class="ai-lbl">사업자형태</span><span class="ai-val" style="font-weight:700;color:#1b5e20">'+bizType+'</span></div>';
+  h += '<div class="ai-row"><span class="ai-lbl">은행명</span><span class="ai-val">'+(bk||'-')+'</span></div>';
+  h += '<div class="ai-row"><span class="ai-lbl">예금주</span><span class="ai-val">'+(holder||'-')+'</span></div>';
+  h += '<div class="ai-row"><span class="ai-lbl">계좌번호</span><span class="ai-val" style="font-weight:700">'+(ac||'-')+'</span></div>';
+  h += '<div class="ai-row"><span class="ai-lbl">실명번호</span><span class="ai-val">'+(idNo||'-')+'</span></div>';
+  h += '</div>';
+  return h;
+}
 // ===== 공유 링크 복사 (HTTPS/HTTP 모두 대응) =====
 function copyShareLink(url){
   // 방법 1: clipboard API (HTTPS 필요)
