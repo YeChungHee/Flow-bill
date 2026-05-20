@@ -441,12 +441,15 @@ function parseNum(s){return parseInt(String(s).replace(/[^0-9]/g,''))||0}
 // 날짜 정규화: ISO/UTC → 한국시간 YYYY-MM-DD
 function fixDate(v){
   if(!v) return '';
-  var s = String(v);
+  var s = String(v).trim();
   if(s.indexOf('T')!==-1){
     var d = new Date(s);
     d.setMinutes(d.getMinutes() + d.getTimezoneOffset() + 540); // UTC→KST(+9)
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
+  // "2026. 5. 1" 또는 "2026. 05. 01." 형식 처리
+  var dm=s.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+  if(dm) return dm[1]+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[3]).padStart(2,'0');
   return s.substring(0,10);
 }
 function daysBetween(a,b){return Math.ceil((new Date(b)-new Date(a))/(1000*60*60*24))}
